@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f3ec;
+  --foreground: #2a1f16;
+
+  /* Paleta de marca Wears — cuero premium. Ajustable a la identidad real de Cueroswears.com */
+  --wears-black: #1a1310;
+  --wears-espresso: #3a2a1d;
+  --wears-leather: #8a5a35;
+  --wears-tan: #c99b64;
+  --wears-sand: #f0e4d3;
+  --wears-gold: #b6862c;
+  --wears-cream: #f7f3ec;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-wears-black: var(--wears-black);
+  --color-wears-espresso: var(--wears-espresso);
+  --color-wears-leather: var(--wears-leather);
+  --color-wears-tan: var(--wears-tan);
+  --color-wears-sand: var(--wears-sand);
+  --color-wears-gold: var(--wears-gold);
+  --color-wears-cream: var(--wears-cream);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}

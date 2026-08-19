@@ -1,0 +1,216 @@
+// Esquema de datos - Wears Inventario (panel de administración e inventario de aliados comerciales)
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  ADMIN
+  ALLY
+}
+
+enum LocationType {
+  WEB
+  STORE
+  FACTORY
+  ALLY
+}
+
+enum AcquisitionType {
+  PURCHASE
+  CONSIGNMENT
+}
+
+enum MovementType {
+  RECEIVE
+  SALE
+  ADJUSTMENT
+  TRANSFER_IN
+  TRANSFER_OUT
+}
+
+enum LedgerType {
+  CONSIGNMENT_CHARGE
+  PAYMENT
+  ADJUSTMENT
+}
+
+enum SupportType {
+  ACTIVACION_MARCA
+  PROBLEMA_PRODUCTO
+  OTRO
+}
+
+enum SupportStatus {
+  PENDIENTE
+  EN_PROCESO
+  RESUELTO
+}
+
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  SENT
+  SKIPPED
+  FAILED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         Role
+  name         String
+  active       Boolean   @default(true)
+  mustChangePw Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  ally         Ally?
+  movements    InventoryMovement[]
+}
+
+model Ally {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id])
+  businessName   String
+  contactName    String
+  phone          String?
+  city           String?
+  notes          String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  location       Location?
+  sales          Sale[]
+  ledgerEntries  LedgerEntry[]
+  supportRequests SupportRequest[]
+}
+
+model Location {
+  id        String       @id @default(cuid())
+  name      String
+  type      LocationType
+  address   String?
+  allyId    String?      @unique
+  ally      Ally?        @relation(fields: [allyId], references: [id])
+  createdAt DateTime     @default(now())
+
+  inventoryItems InventoryItem[]
+  sales          Sale[]
+}
+
+model Collection {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  upcoming  Boolean   @default(false)
+  launchNote String?
+  imageUrl  String?
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  sku          String   @unique
+  name         String
+  description  String?
+  imageUrl     String?
+  price        Float
+  cost         Float    @default(0)
+  minStock     Int      @default(2)
+  active       Boolean  @default(true)
+  collectionId String?
+  collection   Collection? @relation(fields: [collectionId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  inventoryItems InventoryItem[]
+  sales          Sale[]
+}
+
+model InventoryItem {
+  id              String          @id @default(cuid())
+  productId       String
+  product         Product         @relation(fields: [productId], references: [id])
+  locationId      String
+  location        Location        @relation(fields: [locationId], references: [id])
+  quantity        Int             @default(0)
+  acquisitionType AcquisitionType @default(PURCHASE)
+  unitCost        Float           @default(0)
+  updatedAt       DateTime        @updatedAt
+  createdAt       DateTime        @default(now())
+
+  movements InventoryMovement[]
+
+  @@unique([productId, locationId])
+}
+
+model InventoryMovement {
+  id              String        @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  type            MovementType
+  quantityDelta   Int
+  note            String?
+  createdByUserId String?
+  createdBy       User?         @relation(fields: [createdByUserId], references: [id])
+  createdAt       DateTime      @default(now())
+}
+
+model Sale {
+  id         String   @id @default(cuid())
+  allyId     String
+  ally       Ally     @relation(fields: [allyId], references: [id])
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int
+  unitPrice  Float
+  saleDate   DateTime @default(now())
+  note       String?
+  createdAt  DateTime @default(now())
+}
+
+model LedgerEntry {
+  id          String     @id @default(cuid())
+  allyId      String
+  ally        Ally       @relation(fields: [allyId], references: [id])
+  type        LedgerType
+  amount      Float
+  description String?
+  createdAt   DateTime   @default(now())
+}
+
+model SupportRequest {
+  id        String        @id @default(cuid())
+  allyId    String
+  ally      Ally          @relation(fields: [allyId], references: [id])
+  type      SupportType
+  message   String
+  status    SupportStatus @default(PENDIENTE)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model NotificationLog {
+  id        String              @id @default(cuid())
+  channel   NotificationChannel
+  event     String
+  recipient String
+  message   String
+  status    NotificationStatus
+  error     String?
+  createdAt DateTime            @default(now())
+}
