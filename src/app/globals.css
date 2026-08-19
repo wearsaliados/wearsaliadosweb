@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f3ec;
-  --foreground: #2a1f16;
+  --background: #f2e9da;
+  --foreground: #1f0f45;
 
-  /* Paleta de marca Wears — cuero premium. Ajustable a la identidad real de Cueroswears.com */
-  --wears-black: #1a1310;
-  --wears-espresso: #3a2a1d;
-  --wears-leather: #8a5a35;
-  --wears-tan: #c99b64;
-  --wears-sand: #f0e4d3;
-  --wears-gold: #b6862c;
-  --wears-cream: #f7f3ec;
+  /* Paleta de marca Wears — tomada de cueroswears.com (violeta profundo + dorado + crudo) */
+  --wears-black: #1f0f45;
+  --wears-espresso: #4a3a73;
+  --wears-leather: #6b4fa0;
+  --wears-tan: #c9a24a;
+  --wears-sand: #ece3d6;
+  --wears-gold: #c6982a;
+  --wears-cream: #f2e9da;
 }
 
 @theme inline {
