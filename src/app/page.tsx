@@ -4,7 +4,7 @@ import WearsAnchorLogo from "@/components/wears-logo";
 export default function HomePage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-20 text-center bg-wears-black text-wears-cream">
-      <WearsAnchorLogo className="h-16 w-16" />
+      <WearsAnchorLogo variant="full" className="h-32 w-32" />
       <div>
         <p className="text-xs tracking-[0.4em] uppercase text-wears-tan">
           Cueroswears.com
