@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import NavLink from "@/components/nav-link";
 import LogoutButton from "@/components/logout-button";
 import MustChangePasswordBanner from "@/components/must-change-password-banner";
+import WearsAnchorLogo from "@/components/wears-logo";
 
 const links = [
   { href: "/admin", label: "Panel general" },
@@ -29,11 +30,16 @@ export default async function AdminLayout({
       <div className="flex flex-1 flex-col lg:flex-row bg-wears-cream">
         <aside className="lg:w-64 shrink-0 bg-wears-black text-wears-cream">
           <div className="p-6">
-            <p className="text-[10px] tracking-[0.4em] uppercase text-wears-tan">
-              Cueroswears.com
-            </p>
-            <p className="mt-1 text-lg font-semibold">Wears Inventario</p>
-            <p className="mt-0.5 text-xs text-wears-sand/50">Panel administrador</p>
+            <div className="flex items-center gap-3">
+              <WearsAnchorLogo className="h-9 w-9 shrink-0" />
+              <div>
+                <p className="text-[10px] tracking-[0.4em] uppercase text-wears-tan">
+                  Cueroswears.com
+                </p>
+                <p className="text-lg font-semibold leading-tight">Wears Inventario</p>
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-wears-sand/50">Panel administrador</p>
           </div>
           <nav className="flex flex-row flex-wrap gap-1 px-4 pb-4 lg:flex-col">
             {links.map((l) => (
