@@ -1,6 +1,7 @@
 import { requireAlly } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import SupportForm from "./support-form";
+import ActivationOptions from "./activation-options";
 
 const TYPE_LABEL: Record<string, string> = {
   ACTIVACION_MARCA: "Activación de marca",
@@ -32,12 +33,7 @@ export default async function AllySoportePage() {
         </p>
       </div>
 
-      <SupportForm
-        type="ACTIVACION_MARCA"
-        title="Solicita tu activación de marca"
-        placeholder="Cuéntanos sobre tu local, evento o vitrina y qué apoyo de marca necesitas..."
-        submitLabel="Solicitar activación"
-      />
+      <ActivationOptions />
 
       <SupportForm
         type="PROBLEMA_PRODUCTO"

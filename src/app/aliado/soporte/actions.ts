@@ -10,7 +10,8 @@ export type FormState = { error?: string; success?: string };
 
 const schema = z.object({
   type: z.enum(["ACTIVACION_MARCA", "PROBLEMA_PRODUCTO", "OTRO"]),
-  message: z.string().min(5, "Cuéntanos un poco más"),
+  activation: z.string().optional(),
+  message: z.string().optional(),
 });
 
 export async function submitSupportRequest(
@@ -22,7 +23,16 @@ export async function submitSupportRequest(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
-  const { type, message } = parsed.data;
+  const { type, activation } = parsed.data;
+  const note = parsed.data.message?.trim() ?? "";
+
+  const message = activation
+    ? `Activación solicitada: ${activation}.${note ? ` ${note}` : ""}`
+    : note;
+
+  if (message.length < 5) {
+    return { error: "Cuéntanos un poco más" };
+  }
 
   const ally = await prisma.ally.findUniqueOrThrow({ where: { id: session.allyId } });
 

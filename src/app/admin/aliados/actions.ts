@@ -8,7 +8,8 @@ import { requireAdmin, hashPassword, generateTempPassword } from "@/lib/auth";
 export type FormState = { error?: string; success?: string };
 
 const allySchema = z.object({
-  email: z.string().email("Correo inválido"),
+  email: z.string().trim().min(3, "El correo o usuario es obligatorio"),
+  password: z.string().trim().optional(),
   businessName: z.string().min(2, "El nombre del negocio es obligatorio"),
   contactName: z.string().min(2, "El nombre de contacto es obligatorio"),
   phone: z.string().optional(),
@@ -29,17 +30,19 @@ export async function createAlly(
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    return { error: "Ya existe un usuario con ese correo" };
+    return { error: "Ya existe un usuario con ese correo o usuario" };
   }
 
-  const tempPassword = generateTempPassword();
+  const usingCustomPassword = Boolean(data.password);
+  const finalPassword = data.password || generateTempPassword();
 
   const user = await prisma.user.create({
     data: {
       email,
-      passwordHash: await hashPassword(tempPassword),
+      passwordHash: await hashPassword(finalPassword),
       role: "ALLY",
       name: data.contactName,
+      mustChangePw: !usingCustomPassword,
     },
   });
   const ally = await prisma.ally.create({
@@ -57,7 +60,9 @@ export async function createAlly(
 
   revalidatePath("/admin/aliados");
   return {
-    success: `Aliado creado. Usuario: ${email} · Contraseña temporal: ${tempPassword} (compártela de forma segura, se le pedirá cambiarla).`,
+    success: usingCustomPassword
+      ? `Aliado creado. Usuario: ${email} con la contraseña que definiste.`
+      : `Aliado creado. Usuario: ${email} · Contraseña temporal: ${finalPassword} (compártela de forma segura, se le pedirá cambiarla).`,
   };
 }
 

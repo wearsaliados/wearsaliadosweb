@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatCOP } from "@/lib/inventory";
+import { formatUSD } from "@/lib/inventory";
 
 export default async function VentasPage() {
   await requireAdmin();
@@ -22,7 +22,7 @@ export default async function VentasPage() {
         </h1>
         <p className="text-sm text-wears-espresso/60">
           Registro de todas las ventas reportadas por los aliados ({sales.length}{" "}
-          últimas · {totalUnits} unidades · {formatCOP(totalRevenue)}).
+          últimas · {totalUnits} unidades · {formatUSD(totalRevenue)}).
         </p>
       </div>
 
@@ -49,9 +49,9 @@ export default async function VentasPage() {
                   <td className="py-2 pr-4">{s.ally.businessName}</td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
-                  <td className="py-2 pr-4">{formatCOP(s.unitPrice)}</td>
+                  <td className="py-2 pr-4">{formatUSD(s.unitPrice)}</td>
                   <td className="py-2 pr-4 font-medium">
-                    {formatCOP(s.quantity * s.unitPrice)}
+                    {formatUSD(s.quantity * s.unitPrice)}
                   </td>
                   <td className="py-2 pr-4 text-wears-espresso/60">{s.note ?? "—"}</td>
                 </tr>

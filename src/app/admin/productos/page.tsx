@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatCOP } from "@/lib/inventory";
+import { formatUSD } from "@/lib/inventory";
 import ProductForm from "./product-form";
 import CollectionForm from "./collection-form";
 import { toggleProductActive } from "./actions";
@@ -77,8 +77,8 @@ export default async function ProductosPage() {
                     <td className="py-2 pr-4 text-wears-espresso/70">
                       {p.collection?.name ?? "—"}
                     </td>
-                    <td className="py-2 pr-4">{formatCOP(p.price)}</td>
-                    <td className="py-2 pr-4">{formatCOP(p.cost)}</td>
+                    <td className="py-2 pr-4">{formatUSD(p.price)}</td>
+                    <td className="py-2 pr-4">{formatUSD(p.cost)}</td>
                     <td className="py-2 pr-4">{totalStock}</td>
                     <td className="py-2 pr-4">
                       <span

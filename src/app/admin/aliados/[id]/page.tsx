@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatCOP, getStockStatus, STOCK_STATUS_LABEL, STOCK_STATUS_CLASSES } from "@/lib/inventory";
+import { formatUSD, getStockStatus, STOCK_STATUS_LABEL, STOCK_STATUS_CLASSES } from "@/lib/inventory";
 import { toggleAllyActive } from "../actions";
 import AssignStockForm from "./assign-stock-form";
 import LedgerForm from "./ledger-form";
@@ -118,7 +118,7 @@ export default async function AllyDetailPage({
               balance > 0 ? "text-amber-600" : "text-emerald-600"
             }`}
           >
-            Saldo: {formatCOP(balance)}
+            Saldo: {formatUSD(balance)}
           </p>
         </div>
         <LedgerForm allyId={ally.id} />
@@ -152,7 +152,7 @@ export default async function AllyDetailPage({
                     }`}
                   >
                     {e.type === "PAYMENT" ? "-" : "+"}
-                    {formatCOP(e.amount)}
+                    {formatUSD(e.amount)}
                   </td>
                 </tr>
               ))}
@@ -188,7 +188,7 @@ export default async function AllyDetailPage({
                   </td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
-                  <td className="py-2 pr-4">{formatCOP(s.quantity * s.unitPrice)}</td>
+                  <td className="py-2 pr-4">{formatUSD(s.quantity * s.unitPrice)}</td>
                 </tr>
               ))}
               {ally.sales.length === 0 && (

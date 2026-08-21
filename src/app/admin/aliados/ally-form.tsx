@@ -33,9 +33,15 @@ export default function AllyForm() {
       />
       <input
         name="email"
-        type="email"
-        placeholder="Correo (será su usuario)"
+        type="text"
+        placeholder="Correo o usuario de acceso"
         required
+        className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
+      />
+      <input
+        name="password"
+        type="text"
+        placeholder="Contraseña (opcional, si no la dejas se genera una temporal)"
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
       />
       <input

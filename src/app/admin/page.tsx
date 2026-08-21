@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getAdminDashboardMetrics } from "@/lib/metrics";
-import { formatCOP } from "@/lib/inventory";
+import { formatUSD } from "@/lib/inventory";
 import StatCard from "@/components/stat-card";
 import BarList from "@/components/bar-list";
 
@@ -29,12 +29,12 @@ export default async function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Valor en consignación"
-          value={formatCOP(m.totalConsignmentValue)}
+          value={formatUSD(m.totalConsignmentValue)}
           hint={`${m.totalConsignmentUnits} unidades entregadas a consignación`}
         />
         <StatCard
           label="Deuda total de aliados"
-          value={formatCOP(m.totalDebt)}
+          value={formatUSD(m.totalDebt)}
           tone={m.totalDebt > 0 ? "warning" : "default"}
           hint="Consignación pendiente de pago"
         />
@@ -112,7 +112,7 @@ export default async function AdminDashboardPage() {
             <BarList
               items={m.alliesWithDebt.map((a) => ({ name: a.name, value: a.balance }))}
               colorClass="bg-amber-500"
-              formatValue={(v) => formatCOP(v)}
+              formatValue={(v) => formatUSD(v)}
             />
           )}
         </section>
@@ -145,7 +145,7 @@ export default async function AdminDashboardPage() {
                   <td className="py-2 pr-4">{s.ally.businessName}</td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
-                  <td className="py-2 pr-4">{formatCOP(s.quantity * s.unitPrice)}</td>
+                  <td className="py-2 pr-4">{formatUSD(s.quantity * s.unitPrice)}</td>
                 </tr>
               ))}
               {m.recentSales.length === 0 && (

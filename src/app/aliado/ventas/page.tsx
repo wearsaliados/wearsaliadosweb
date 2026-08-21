@@ -1,6 +1,6 @@
 import { requireAlly } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatCOP } from "@/lib/inventory";
+import { formatUSD } from "@/lib/inventory";
 import SaleForm from "./sale-form";
 
 export default async function AllyVentasPage() {
@@ -59,7 +59,7 @@ export default async function AllyVentasPage() {
                   </td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
-                  <td className="py-2 pr-4">{formatCOP(s.quantity * s.unitPrice)}</td>
+                  <td className="py-2 pr-4">{formatUSD(s.quantity * s.unitPrice)}</td>
                 </tr>
               ))}
               {sales.length === 0 && (

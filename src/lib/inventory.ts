@@ -18,10 +18,11 @@ export const STOCK_STATUS_CLASSES: Record<StockStatus, string> = {
   DISPONIBLE: "bg-emerald-100 text-emerald-700 border-emerald-300",
 };
 
-export function formatCOP(value: number) {
-  return new Intl.NumberFormat("es-CO", {
+export function formatUSD(value: number) {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
+    currency: "USD",
+    minimumFractionDigits: value % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
   }).format(value);
 }

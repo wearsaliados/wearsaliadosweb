@@ -1,6 +1,6 @@
 import { requireAlly } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatCOP } from "@/lib/inventory";
+import { formatUSD } from "@/lib/inventory";
 
 export default async function AllyCuentaPage() {
   const session = await requireAlly();
@@ -37,7 +37,7 @@ export default async function AllyCuentaPage() {
             balance > 0 ? "text-amber-700" : "text-emerald-700"
           }`}
         >
-          {formatCOP(Math.max(balance, 0))}
+          {formatUSD(Math.max(balance, 0))}
         </p>
         {balance <= 0 && (
           <p className="mt-1 text-sm text-emerald-700">Estás al día. ¡Gracias!</p>
@@ -76,7 +76,7 @@ export default async function AllyCuentaPage() {
                     }`}
                   >
                     {e.type === "PAYMENT" ? "-" : "+"}
-                    {formatCOP(e.amount)}
+                    {formatUSD(e.amount)}
                   </td>
                 </tr>
               ))}

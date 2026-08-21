@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAlly } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatCOP, getStockStatus, STOCK_STATUS_LABEL, STOCK_STATUS_CLASSES } from "@/lib/inventory";
+import { formatUSD, getStockStatus, STOCK_STATUS_LABEL, STOCK_STATUS_CLASSES } from "@/lib/inventory";
 import StatCard from "@/components/stat-card";
 import UpcomingBanner from "@/components/upcoming-banner";
 
@@ -39,7 +39,7 @@ export default async function AllyDashboardPage() {
 
       <div>
         <h1 className="text-2xl font-semibold text-wears-black">
-          Hola, {ally.contactName.split(" ")[0]}
+          Hola, {ally.contactName}
         </h1>
         <p className="text-sm text-wears-espresso/60">
           Este es el inventario que {ally.businessName} tiene disponible con Wears.
@@ -60,7 +60,7 @@ export default async function AllyDashboardPage() {
         {balance > 0 ? (
           <StatCard
             label="Saldo a consignación"
-            value={formatCOP(balance)}
+            value={formatUSD(balance)}
             tone="warning"
           />
         ) : (
@@ -117,18 +117,28 @@ export default async function AllyDashboardPage() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-wears-tan/30 bg-wears-espresso/5 p-5 text-sm text-wears-espresso/80">
-        <p>
-          ¿Vas a lanzar una nueva vitrina o necesitas material de marca?{" "}
-          <Link href="/aliado/soporte" className="font-medium text-wears-gold hover:underline">
+      <section className="flex flex-col items-start gap-4 rounded-2xl border border-wears-gold/40 bg-gradient-to-br from-wears-black to-wears-espresso p-6 text-wears-cream shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-lg font-semibold">Te ayudamos a vender</p>
+          <p className="mt-1 text-sm text-wears-sand/70">
+            Activaciones de marca para tu punto de venta, o soporte si tienes
+            un problema con tu producto Wears.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/aliado/soporte"
+            className="rounded-full bg-wears-gold px-5 py-2.5 text-sm font-medium text-wears-black transition hover:bg-wears-tan"
+          >
             Solicita tu activación de marca
-          </Link>{" "}
-          o{" "}
-          <Link href="/aliado/soporte" className="font-medium text-wears-gold hover:underline">
-            contáctanos
-          </Link>{" "}
-          si tienes un problema con tu producto Wears.
-        </p>
+          </Link>
+          <Link
+            href="/aliado/soporte"
+            className="rounded-full border border-wears-cream/40 px-5 py-2.5 text-sm font-medium text-wears-cream transition hover:border-wears-gold hover:text-wears-gold"
+          >
+            Contáctanos
+          </Link>
+        </div>
       </section>
     </div>
   );

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAlly } from "@/lib/auth";
 import { notifyAdmin } from "@/lib/notifications";
-import { formatCOP, getStockStatus } from "@/lib/inventory";
+import { formatUSD, getStockStatus } from "@/lib/inventory";
 
 export type FormState = { error?: string; success?: string };
 
@@ -74,7 +74,7 @@ export async function registerSale(
   await notifyAdmin({
     event: "sale_registered",
     subject: `Venta registrada — ${ally.businessName}`,
-    message: `${ally.businessName} vendió ${quantity} x ${item.product.name} por ${formatCOP(
+    message: `${ally.businessName} vendió ${quantity} x ${item.product.name} por ${formatUSD(
       quantity * unitPrice
     )}. Disponible restante: ${remaining} (${status === "AGOTADO" ? "¡AGOTADO, requiere reposición!" : status === "BAJO" ? "stock bajo" : "disponible"}).`,
   });

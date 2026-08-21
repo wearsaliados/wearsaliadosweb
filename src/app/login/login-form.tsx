@@ -12,16 +12,16 @@ export default function LoginForm() {
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm text-wears-sand/80">
-          Correo
+          Correo o usuario
         </label>
         <input
           id="email"
           name="email"
-          type="email"
+          type="text"
           required
           autoComplete="username"
           className="rounded-lg border border-wears-tan/30 bg-wears-black/40 px-4 py-2.5 text-wears-cream outline-none focus:border-wears-gold"
-          placeholder="tucorreo@ejemplo.com"
+          placeholder="tucorreo@ejemplo.com o tu usuario"
         />
       </div>
       <div className="flex flex-col gap-1">
