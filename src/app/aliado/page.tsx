@@ -8,13 +8,17 @@ import UpcomingBanner from "@/components/upcoming-banner";
 export default async function AllyDashboardPage() {
   const session = await requireAlly();
 
-  const [ally, location, ledgerEntries] = await Promise.all([
+  const [ally, location, ledgerEntries, profitSales] = await Promise.all([
     prisma.ally.findUniqueOrThrow({ where: { id: session.allyId } }),
     prisma.location.findUnique({
       where: { allyId: session.allyId },
       include: { inventoryItems: { include: { product: true } } },
     }),
     prisma.ledgerEntry.findMany({ where: { allyId: session.allyId } }),
+    prisma.sale.findMany({
+      where: { allyId: session.allyId },
+      select: { quantity: true, unitPrice: true, unitCost: true },
+    }),
   ]);
 
   const items = location?.inventoryItems ?? [];
@@ -23,6 +27,10 @@ export default async function AllyDashboardPage() {
   const lowStock = items.filter((i) => getStockStatus(i.quantity, i.product.minStock) === "BAJO");
   const balance = ledgerEntries.reduce(
     (s, e) => s + (e.type === "PAYMENT" ? -e.amount : e.amount),
+    0
+  );
+  const totalProfit = profitSales.reduce(
+    (sum, s) => sum + (s.unitPrice - s.unitCost) * s.quantity,
     0
   );
 
@@ -46,7 +54,7 @@ export default async function AllyDashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard label="Unidades disponibles" value={totalUnits.toString()} />
         <StatCard
           label="Vendidas este mes"
@@ -66,6 +74,12 @@ export default async function AllyDashboardPage() {
         ) : (
           <StatCard label="Productos en stock bajo" value={lowStock.length.toString()} tone={lowStock.length > 0 ? "warning" : "default"} />
         )}
+        <StatCard
+          label="Rentabilidad"
+          value={formatUSD(totalProfit)}
+          hint="Lo que has ganado con Wears"
+          tone="success"
+        />
       </div>
 
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">

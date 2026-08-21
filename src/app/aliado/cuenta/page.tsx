@@ -5,13 +5,23 @@ import { formatUSD } from "@/lib/inventory";
 export default async function AllyCuentaPage() {
   const session = await requireAlly();
 
-  const entries = await prisma.ledgerEntry.findMany({
-    where: { allyId: session.allyId },
-    orderBy: { createdAt: "desc" },
-  });
+  const [entries, profitSales] = await Promise.all([
+    prisma.ledgerEntry.findMany({
+      where: { allyId: session.allyId },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.sale.findMany({
+      where: { allyId: session.allyId },
+      select: { quantity: true, unitPrice: true, unitCost: true },
+    }),
+  ]);
 
   const balance = entries.reduce(
     (s, e) => s + (e.type === "PAYMENT" ? -e.amount : e.amount),
+    0
+  );
+  const totalProfit = profitSales.reduce(
+    (sum, s) => sum + (s.unitPrice - s.unitCost) * s.quantity,
     0
   );
 
@@ -24,25 +34,39 @@ export default async function AllyCuentaPage() {
         </p>
       </div>
 
-      <section
-        className={`rounded-xl border p-5 shadow-sm ${
-          balance > 0 ? "border-amber-300 bg-amber-50" : "border-emerald-300 bg-emerald-50"
-        }`}
-      >
-        <p className="text-xs uppercase tracking-wide text-wears-espresso/60">
-          Saldo pendiente
-        </p>
-        <p
-          className={`mt-1 text-3xl font-semibold ${
-            balance > 0 ? "text-amber-700" : "text-emerald-700"
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <section
+          className={`rounded-xl border p-5 shadow-sm ${
+            balance > 0 ? "border-amber-300 bg-amber-50" : "border-emerald-300 bg-emerald-50"
           }`}
         >
-          {formatUSD(Math.max(balance, 0))}
-        </p>
-        {balance <= 0 && (
-          <p className="mt-1 text-sm text-emerald-700">Estás al día. ¡Gracias!</p>
-        )}
-      </section>
+          <p className="text-xs uppercase tracking-wide text-wears-espresso/60">
+            Saldo pendiente
+          </p>
+          <p
+            className={`mt-1 text-3xl font-semibold ${
+              balance > 0 ? "text-amber-700" : "text-emerald-700"
+            }`}
+          >
+            {formatUSD(Math.max(balance, 0))}
+          </p>
+          {balance <= 0 && (
+            <p className="mt-1 text-sm text-emerald-700">Estás al día. ¡Gracias!</p>
+          )}
+        </section>
+
+        <section className="rounded-xl border border-emerald-400 bg-emerald-50 p-5 shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-wears-espresso/60">
+            Rentabilidad
+          </p>
+          <p className="mt-1 text-3xl font-semibold text-emerald-600">
+            {formatUSD(totalProfit)}
+          </p>
+          <p className="mt-1 text-sm text-emerald-700">
+            Lo que has ganado por navegar con Wears.
+          </p>
+        </section>
+      </div>
 
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
         <h2 className="mb-3 font-semibold text-wears-black">Movimientos</h2>
