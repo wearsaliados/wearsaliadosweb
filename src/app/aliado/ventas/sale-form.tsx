@@ -13,8 +13,12 @@ export default function SaleForm({ items }: { items: SellableItem[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [search, setSearch] = useState("");
 
   const sellable = items.filter((i) => i.quantity > 0);
+  const visible = sellable.filter((i) =>
+    i.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
   const selected = sellable.find((i) => i.productId === selectedId) ?? null;
 
   const [handledSuccess, setHandledSuccess] = useState(state.success);
@@ -44,8 +48,17 @@ export default function SaleForm({ items }: { items: SellableItem[] }) {
         <p className="mb-2 text-sm text-wears-espresso/60">
           Toca el producto que vendiste
         </p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {sellable.map((item) => {
+        {sellable.length > 8 && (
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar modelo o talla..."
+            className="mb-3 w-full rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
+          />
+        )}
+        <div className="grid max-h-[420px] grid-cols-2 gap-3 overflow-y-auto sm:grid-cols-3 lg:grid-cols-4">
+          {visible.map((item) => {
             const active = item.productId === selectedId;
             return (
               <button
@@ -68,6 +81,11 @@ export default function SaleForm({ items }: { items: SellableItem[] }) {
               </button>
             );
           })}
+          {visible.length === 0 && sellable.length > 0 && (
+            <p className="col-span-full text-sm text-wears-espresso/50">
+              Sin resultados para &quot;{search}&quot;.
+            </p>
+          )}
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { formatUSD, getStockStatus, STOCK_STATUS_LABEL, STOCK_STATUS_CLASSES } f
 import { toggleAllyActive } from "../actions";
 import AssignStockForm from "./assign-stock-form";
 import LedgerForm from "./ledger-form";
+import EditAllyForm from "./edit-ally-form";
 
 export default async function AllyDetailPage({
   params,
@@ -58,6 +59,17 @@ export default async function AllyDetailPage({
           </button>
         </form>
       </div>
+
+      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
+        <h2 className="mb-3 font-semibold text-wears-black">Datos del aliado</h2>
+        <EditAllyForm
+          allyId={ally.id}
+          businessName={ally.businessName}
+          contactName={ally.contactName}
+          phone={ally.phone}
+          city={ally.city}
+        />
+      </section>
 
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
         <h2 className="mb-3 font-semibold text-wears-black">
@@ -178,6 +190,7 @@ export default async function AllyDetailPage({
                 <th className="py-2 pr-4">Producto</th>
                 <th className="py-2 pr-4">Cantidad</th>
                 <th className="py-2 pr-4">Total</th>
+                <th className="py-2 pr-4">Ganancia</th>
               </tr>
             </thead>
             <tbody>
@@ -189,11 +202,14 @@ export default async function AllyDetailPage({
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
                   <td className="py-2 pr-4">{formatUSD(s.quantity * s.unitPrice)}</td>
+                  <td className="py-2 pr-4 text-emerald-600">
+                    {formatUSD((s.unitPrice - s.unitCost) * s.quantity)}
+                  </td>
                 </tr>
               ))}
               {ally.sales.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-4 text-center text-wears-espresso/50">
+                  <td colSpan={5} className="py-4 text-center text-wears-espresso/50">
                     Sin ventas registradas todavía.
                   </td>
                 </tr>

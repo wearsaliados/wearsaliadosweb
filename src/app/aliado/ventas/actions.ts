@@ -63,6 +63,7 @@ export async function registerSale(
         productId,
         quantity,
         unitPrice,
+        unitCost: item.unitCost,
         note: note || null,
       },
     }),

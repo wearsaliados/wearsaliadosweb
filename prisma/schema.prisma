@@ -44,6 +44,7 @@ enum LedgerType {
 enum SupportType {
   ACTIVACION_MARCA
   PROBLEMA_PRODUCTO
+  PEDIDO_ANTICIPADO
   OTRO
 }
 
@@ -124,6 +125,7 @@ model Product {
   id           String   @id @default(cuid())
   sku          String   @unique
   name         String
+  size         String?
   description  String?
   imageUrl     String?
   price        Float
@@ -178,6 +180,7 @@ model Sale {
   product    Product  @relation(fields: [productId], references: [id])
   quantity   Int
   unitPrice  Float
+  unitCost   Float    @default(0)
   saleDate   DateTime @default(now())
   note       String?
   createdAt  DateTime @default(now())

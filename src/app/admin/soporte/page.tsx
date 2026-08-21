@@ -5,6 +5,7 @@ import { resolveSupportRequest } from "../aliados/actions";
 const TYPE_LABEL: Record<string, string> = {
   ACTIVACION_MARCA: "Solicitud de activación de marca",
   PROBLEMA_PRODUCTO: "Problema con un producto Wears",
+  PEDIDO_ANTICIPADO: "Pedido anticipado",
   OTRO: "Otro",
 };
 

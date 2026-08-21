@@ -66,6 +66,36 @@ export async function createAlly(
   };
 }
 
+const allyDetailsSchema = z.object({
+  allyId: z.string().min(1),
+  businessName: z.string().min(2, "El nombre del negocio es obligatorio"),
+  contactName: z.string().min(2, "El nombre de contacto es obligatorio"),
+  phone: z.string().optional(),
+  city: z.string().optional(),
+});
+
+export async function updateAllyDetails(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  await requireAdmin();
+  const parsed = allyDetailsSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+  }
+  const { allyId, businessName, contactName, phone, city } = parsed.data;
+
+  await prisma.ally.update({
+    where: { id: allyId },
+    data: { businessName, contactName, phone: phone || null, city: city || null },
+  });
+  await prisma.location.updateMany({ where: { allyId }, data: { name: businessName } });
+
+  revalidatePath(`/admin/aliados/${allyId}`);
+  revalidatePath("/admin/aliados");
+  return { success: "Datos del aliado actualizados" };
+}
+
 export async function toggleAllyActive(allyId: string, active: boolean) {
   await requireAdmin();
   await prisma.ally.update({

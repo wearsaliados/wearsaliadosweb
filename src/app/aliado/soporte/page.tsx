@@ -6,6 +6,7 @@ import ActivationOptions from "./activation-options";
 const TYPE_LABEL: Record<string, string> = {
   ACTIVACION_MARCA: "Activación de marca",
   PROBLEMA_PRODUCTO: "Problema con producto",
+  PEDIDO_ANTICIPADO: "Pedido anticipado",
   OTRO: "Otro",
 };
 

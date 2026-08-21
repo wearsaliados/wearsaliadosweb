@@ -9,7 +9,7 @@ import { notifyAdmin } from "@/lib/notifications";
 export type FormState = { error?: string; success?: string };
 
 const schema = z.object({
-  type: z.enum(["ACTIVACION_MARCA", "PROBLEMA_PRODUCTO", "OTRO"]),
+  type: z.enum(["ACTIVACION_MARCA", "PROBLEMA_PRODUCTO", "PEDIDO_ANTICIPADO", "OTRO"]),
   activation: z.string().optional(),
   message: z.string().optional(),
 });
@@ -43,6 +43,7 @@ export async function submitSupportRequest(
   const subjectByType: Record<string, string> = {
     ACTIVACION_MARCA: "Nueva solicitud de activación de marca",
     PROBLEMA_PRODUCTO: "Reporte de problema con producto Wears",
+    PEDIDO_ANTICIPADO: "Nuevo pedido anticipado",
     OTRO: "Nuevo mensaje de aliado",
   };
 
@@ -54,4 +55,27 @@ export async function submitSupportRequest(
 
   revalidatePath("/aliado/soporte");
   return { success: "Tu mensaje fue enviado. Te responderemos pronto." };
+}
+
+export async function requestPreorder(collectionId: string) {
+  const session = await requireAlly();
+  const [ally, collection] = await Promise.all([
+    prisma.ally.findUniqueOrThrow({ where: { id: session.allyId } }),
+    prisma.collection.findUniqueOrThrow({ where: { id: collectionId } }),
+  ]);
+
+  const message = `Pedido anticipado: colección ${collection.name}, pedido mínimo 15 pares (1 unidad por color y talla).`;
+
+  await prisma.supportRequest.create({
+    data: { allyId: session.allyId, type: "PEDIDO_ANTICIPADO", message },
+  });
+
+  await notifyAdmin({
+    event: "preorder_request",
+    subject: `Nuevo pedido anticipado — ${ally.businessName}`,
+    message: `${ally.businessName} (${ally.contactName}) solicitó pedido anticipado de la colección ${collection.name}.`,
+  });
+
+  revalidatePath("/aliado/soporte");
+  revalidatePath("/admin/soporte");
 }

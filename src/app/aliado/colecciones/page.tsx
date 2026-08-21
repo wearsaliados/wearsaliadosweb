@@ -1,5 +1,6 @@
 import { requireAlly } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requestPreorder } from "../soporte/actions";
 
 export default async function AllyColeccionesPage() {
   await requireAlly();
@@ -38,6 +39,14 @@ export default async function AllyColeccionesPage() {
             {c.launchNote && (
               <p className="mt-2 text-sm text-wears-sand/80">{c.launchNote}</p>
             )}
+            <form action={requestPreorder.bind(null, c.id)} className="mt-4">
+              <button
+                type="submit"
+                className="rounded-full bg-wears-gold px-5 py-2 text-sm font-medium text-wears-black transition hover:bg-wears-tan"
+              >
+                Pídelos con antelación — pedido mínimo 15 pares
+              </button>
+            </form>
           </div>
         ))}
         {upcoming.length === 0 && (
