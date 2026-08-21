@@ -29,6 +29,12 @@ export async function getAdminDashboardMetrics() {
     quantity: number;
     minStock: number;
   }[] = [];
+  const outOfStock: {
+    locationName: string;
+    locationType: string;
+    allyId: string | null;
+    productName: string;
+  }[] = [];
 
   for (const loc of locations) {
     for (const item of loc.inventoryItems) {
@@ -53,6 +59,14 @@ export async function getAdminDashboardMetrics() {
           productName: item.product.name,
           quantity: item.quantity,
           minStock: item.product.minStock,
+        });
+      }
+      if (item.quantity === 0) {
+        outOfStock.push({
+          locationName: loc.ally?.businessName ?? loc.name,
+          locationType: loc.type,
+          allyId: loc.allyId,
+          productName: item.product.name,
         });
       }
     }
@@ -106,6 +120,7 @@ export async function getAdminDashboardMetrics() {
       .map(([name, quantity]) => ({ name, quantity }))
       .sort((a, b) => b.quantity - a.quantity),
     restockNeeded,
+    outOfStock,
     topAllies: alliesRanking.slice(0, 5),
     bottomAllies: [...alliesRanking].reverse().slice(0, 5),
     topProducts: productsRanking.slice(0, 5),

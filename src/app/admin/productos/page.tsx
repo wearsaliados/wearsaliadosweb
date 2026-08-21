@@ -1,9 +1,8 @@
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatUSD } from "@/lib/inventory";
 import ProductForm from "./product-form";
 import CollectionForm from "./collection-form";
-import { toggleProductActive } from "./actions";
+import ProductCatalog from "./product-catalog";
 
 export default async function ProductosPage() {
   await requireAdmin();
@@ -53,57 +52,18 @@ export default async function ProductosPage() {
         <h2 className="mb-3 font-semibold text-wears-black">
           Catálogo ({products.length})
         </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-wears-tan/20 text-left text-wears-espresso/60">
-                <th className="py-2 pr-4">SKU</th>
-                <th className="py-2 pr-4">Nombre</th>
-                <th className="py-2 pr-4">Colección</th>
-                <th className="py-2 pr-4">Precio</th>
-                <th className="py-2 pr-4">Costo</th>
-                <th className="py-2 pr-4">Stock total</th>
-                <th className="py-2 pr-4">Estado</th>
-                <th className="py-2 pr-4" />
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((p) => {
-                const totalStock = p.inventoryItems.reduce((s, i) => s + i.quantity, 0);
-                return (
-                  <tr key={p.id} className="border-b border-wears-tan/10">
-                    <td className="py-2 pr-4 font-mono text-xs">{p.sku}</td>
-                    <td className="py-2 pr-4">{p.name}</td>
-                    <td className="py-2 pr-4 text-wears-espresso/70">
-                      {p.collection?.name ?? "—"}
-                    </td>
-                    <td className="py-2 pr-4">{formatUSD(p.price)}</td>
-                    <td className="py-2 pr-4">{formatUSD(p.cost)}</td>
-                    <td className="py-2 pr-4">{totalStock}</td>
-                    <td className="py-2 pr-4">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs ${
-                          p.active
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {p.active ? "Activo" : "Inactivo"}
-                      </span>
-                    </td>
-                    <td className="py-2 pr-4">
-                      <form action={toggleProductActive.bind(null, p.id, !p.active)}>
-                        <button className="text-xs text-wears-gold hover:underline">
-                          {p.active ? "Desactivar" : "Activar"}
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <ProductCatalog
+          products={products.map((p) => ({
+            id: p.id,
+            sku: p.sku,
+            name: p.name,
+            price: p.price,
+            cost: p.cost,
+            active: p.active,
+            collectionName: p.collection?.name ?? "Sin colección",
+            totalStock: p.inventoryItems.reduce((s, i) => s + i.quantity, 0),
+          }))}
+        />
       </section>
     </div>
   );

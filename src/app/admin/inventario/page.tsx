@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStockStatus, STOCK_STATUS_LABEL, STOCK_STATUS_CLASSES } from "@/lib/inventory";
@@ -14,25 +15,29 @@ const LOCATION_TYPE_LABEL: Record<string, string> = {
 export default async function InventarioPage() {
   await requireAdmin();
 
-  const [locations, products] = await Promise.all([
+  const [nonAllyLocations, products] = await Promise.all([
     prisma.location.findMany({
-      include: { ally: true, inventoryItems: { include: { product: true } } },
+      where: { type: { not: "ALLY" } },
+      include: { inventoryItems: { include: { product: true } } },
       orderBy: [{ type: "asc" }, { name: "asc" }],
     }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
   ]);
 
-  const nonAllyLocations = locations.filter((l) => l.type !== "ALLY");
-
   return (
     <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold text-wears-black">
-          Inventario general
+          Inventario de Wears (tienda, puntos físicos y fábrica)
         </h1>
         <p className="text-sm text-wears-espresso/60">
-          Tienda en línea, puntos físicos, fábrica y aliados comerciales, en un
-          solo lugar.
+          Aquí manejas el inventario que no pertenece a un aliado comercial —
+          incluida la fábrica, para reponer stock. Para el inventario de cada
+          aliado, entra a su ficha en{" "}
+          <Link href="/admin/aliados" className="text-wears-gold hover:underline">
+            Aliados comerciales
+          </Link>
+          .
         </p>
       </div>
 
@@ -41,8 +46,8 @@ export default async function InventarioPage() {
           Nuevo movimiento (entradas / salidas / reposición)
         </h2>
         <p className="mb-3 text-xs text-wears-espresso/50">
-          Para asignar mercancía a un aliado (compra o consignación), hazlo
-          desde su ficha en “Aliados comerciales”.
+          Elige la ubicación (por ejemplo “Fábrica”) para registrar entradas
+          de mercancía nueva o ajustes de stock.
         </p>
         <MovementForm
           locations={nonAllyLocations.map((l) => ({ id: l.id, name: l.name }))}
@@ -56,15 +61,13 @@ export default async function InventarioPage() {
       </section>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {locations.map((loc) => (
+        {nonAllyLocations.map((loc) => (
           <section
             key={loc.id}
             className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm"
           >
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-semibold text-wears-black">
-                {loc.ally?.businessName ?? loc.name}
-              </h2>
+              <h2 className="font-semibold text-wears-black">{loc.name}</h2>
               <span className="rounded-full bg-wears-sand px-2 py-0.5 text-xs text-wears-espresso/70">
                 {LOCATION_TYPE_LABEL[loc.type]}
               </span>

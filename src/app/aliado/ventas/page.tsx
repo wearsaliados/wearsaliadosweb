@@ -9,7 +9,7 @@ export default async function AllyVentasPage() {
   const [location, sales, allProfitSales] = await Promise.all([
     prisma.location.findUnique({
       where: { allyId: session.allyId },
-      include: { inventoryItems: { include: { product: true } } },
+      include: { inventoryItems: { include: { product: { include: { collection: true } } } } },
     }),
     prisma.sale.findMany({
       where: { allyId: session.allyId },
@@ -26,8 +26,11 @@ export default async function AllyVentasPage() {
   const items = (location?.inventoryItems ?? []).map((i) => ({
     productId: i.productId,
     name: i.product.name,
+    size: i.product.size,
     quantity: i.quantity,
     price: i.product.price,
+    collectionId: i.product.collectionId ?? "sin-coleccion",
+    collectionName: i.product.collection?.name ?? "Otros productos",
   }));
 
   const totalProfit = allProfitSales.reduce(

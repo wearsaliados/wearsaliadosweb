@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, hashPassword, generateTempPassword } from "@/lib/auth";
@@ -104,6 +105,40 @@ export async function toggleAllyActive(allyId: string, active: boolean) {
   });
   revalidatePath("/admin/aliados");
   revalidatePath(`/admin/aliados/${allyId}`);
+}
+
+export async function deleteAlly(allyId: string) {
+  await requireAdmin();
+
+  const ally = await prisma.ally.findUnique({
+    where: { id: allyId },
+    include: { location: true },
+  });
+  if (!ally) return;
+
+  await prisma.$transaction(async (tx) => {
+    if (ally.location) {
+      const itemIds = (
+        await tx.inventoryItem.findMany({
+          where: { locationId: ally.location.id },
+          select: { id: true },
+        })
+      ).map((i) => i.id);
+      await tx.inventoryMovement.deleteMany({ where: { inventoryItemId: { in: itemIds } } });
+      await tx.inventoryItem.deleteMany({ where: { locationId: ally.location.id } });
+    }
+    await tx.sale.deleteMany({ where: { allyId } });
+    await tx.ledgerEntry.deleteMany({ where: { allyId } });
+    await tx.supportRequest.deleteMany({ where: { allyId } });
+    if (ally.location) {
+      await tx.location.delete({ where: { id: ally.location.id } });
+    }
+    await tx.ally.delete({ where: { id: allyId } });
+    await tx.user.delete({ where: { id: ally.userId } });
+  });
+
+  revalidatePath("/admin/aliados");
+  redirect("/admin/aliados");
 }
 
 const stockSchema = z.object({

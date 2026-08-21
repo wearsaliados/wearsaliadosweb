@@ -18,6 +18,36 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
+      {m.outOfStock.length > 0 && (
+        <section className="rounded-xl border-2 border-red-400 bg-red-50 p-5 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 font-semibold text-red-800">
+              🔴 {m.outOfStock.length} producto{m.outOfStock.length === 1 ? "" : "s"} agotado
+              {m.outOfStock.length === 1 ? "" : "s"} — requiere reposición urgente
+            </h2>
+            <Link href="/admin/reposicion" className="text-sm text-red-700 hover:underline">
+              Ver detalle
+            </Link>
+          </div>
+          <ul className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            {m.outOfStock.slice(0, 9).map((r, i) => (
+              <li
+                key={i}
+                className="rounded-lg border border-red-300 bg-white px-3 py-2"
+              >
+                <p className="font-medium text-wears-black">{r.productName}</p>
+                <p className="text-xs text-red-700">{r.locationName} — 0 disponibles</p>
+              </li>
+            ))}
+          </ul>
+          {m.outOfStock.length > 9 && (
+            <p className="mt-2 text-xs text-red-700">
+              y {m.outOfStock.length - 9} más...
+            </p>
+          )}
+        </section>
+      )}
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard label="Total unidades" value={m.totalUnits.toString()} />
         <StatCard label="En tienda en línea" value={m.inventoryByLocationType.WEB.toString()} />

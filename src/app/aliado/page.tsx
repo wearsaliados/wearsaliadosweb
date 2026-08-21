@@ -54,6 +54,28 @@ export default async function AllyDashboardPage() {
         </p>
       </div>
 
+      {outOfStock.length > 0 && (
+        <section className="rounded-xl border-2 border-red-400 bg-red-50 p-5 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-semibold text-red-800">
+              🔴 {outOfStock.length} producto{outOfStock.length === 1 ? "" : "s"} agotado
+              {outOfStock.length === 1 ? "" : "s"}
+            </h2>
+            <Link href="/aliado/soporte" className="text-sm text-red-700 hover:underline">
+              Solicitar reposición
+            </Link>
+          </div>
+          <ul className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            {outOfStock.map((item) => (
+              <li key={item.id} className="rounded-lg border border-red-300 bg-white px-3 py-2">
+                <p className="font-medium text-wears-black">{item.product.name}</p>
+                <p className="text-xs text-red-700">0 disponibles</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard label="Unidades disponibles" value={totalUnits.toString()} />
         <StatCard

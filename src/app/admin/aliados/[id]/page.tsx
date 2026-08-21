@@ -6,6 +6,7 @@ import { toggleAllyActive } from "../actions";
 import AssignStockForm from "./assign-stock-form";
 import LedgerForm from "./ledger-form";
 import EditAllyForm from "./edit-ally-form";
+import DeleteAllyButton from "./delete-ally-button";
 
 export default async function AllyDetailPage({
   params,
@@ -47,17 +48,20 @@ export default async function AllyDetailPage({
             {ally.city && `· ${ally.city}`}
           </p>
         </div>
-        <form action={toggleAllyActive.bind(null, ally.id, !ally.active)}>
-          <button
-            className={`rounded-full border px-4 py-1.5 text-sm ${
-              ally.active
-                ? "border-red-300 text-red-600 hover:bg-red-50"
-                : "border-emerald-300 text-emerald-600 hover:bg-emerald-50"
-            }`}
-          >
-            {ally.active ? "Desactivar aliado" : "Activar aliado"}
-          </button>
-        </form>
+        <div className="flex items-center gap-2">
+          <form action={toggleAllyActive.bind(null, ally.id, !ally.active)}>
+            <button
+              className={`rounded-full border px-4 py-1.5 text-sm ${
+                ally.active
+                  ? "border-red-300 text-red-600 hover:bg-red-50"
+                  : "border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+              }`}
+            >
+              {ally.active ? "Desactivar aliado" : "Activar aliado"}
+            </button>
+          </form>
+          <DeleteAllyButton allyId={ally.id} businessName={ally.businessName} />
+        </div>
       </div>
 
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
