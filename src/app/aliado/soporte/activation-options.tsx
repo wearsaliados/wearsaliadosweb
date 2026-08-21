@@ -38,6 +38,7 @@ const OPTIONS: {
     icon: Tag,
     title: "Descuento especial",
     description: "Promoción con precio especial en un producto puntual.",
+    image: "/activations/descuento.jpg",
   },
 ];
 
