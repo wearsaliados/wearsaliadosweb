@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { requireAlly } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requestPreorder } from "../soporte/actions";
@@ -30,23 +31,30 @@ export default async function AllyColeccionesPage() {
         {upcoming.map((c) => (
           <div
             key={c.id}
-            className="rounded-xl border border-wears-gold/40 bg-gradient-to-br from-wears-black to-wears-espresso p-6 text-wears-cream shadow-sm"
+            className="overflow-hidden rounded-xl border border-wears-gold/40 bg-gradient-to-br from-wears-black to-wears-espresso text-wears-cream shadow-sm"
           >
-            <p className="text-[10px] uppercase tracking-[0.3em] text-wears-gold">
-              Próximamente
-            </p>
-            <h2 className="mt-2 text-xl font-semibold">{c.name}</h2>
-            {c.launchNote && (
-              <p className="mt-2 text-sm text-wears-sand/80">{c.launchNote}</p>
+            {c.imageUrl && (
+              <div className="relative h-56 w-full">
+                <Image src={c.imageUrl} alt={c.name} fill className="object-cover" sizes="600px" />
+              </div>
             )}
-            <form action={requestPreorder.bind(null, c.id)} className="mt-4">
-              <button
-                type="submit"
-                className="rounded-full bg-wears-gold px-5 py-2 text-sm font-medium text-wears-black transition hover:bg-wears-tan"
-              >
-                Pídelos con antelación — pedido mínimo 15 pares
-              </button>
-            </form>
+            <div className="p-6">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-wears-gold">
+                Próximamente
+              </p>
+              <h2 className="mt-2 text-xl font-semibold">{c.name}</h2>
+              {c.launchNote && (
+                <p className="mt-2 text-sm text-wears-sand/80">{c.launchNote}</p>
+              )}
+              <form action={requestPreorder.bind(null, c.id)} className="mt-4">
+                <button
+                  type="submit"
+                  className="rounded-full bg-wears-gold px-5 py-2 text-sm font-medium text-wears-black transition hover:bg-wears-tan"
+                >
+                  Pídelos con antelación — pedido mínimo 15 pares
+                </button>
+              </form>
+            </div>
           </div>
         ))}
         {upcoming.length === 0 && (

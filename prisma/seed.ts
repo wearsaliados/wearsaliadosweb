@@ -118,6 +118,7 @@ async function main() {
     where: { name: "El Barco Wears — Próxima Colección" },
     data: {
       name: "M Jane",
+      imageUrl: "/brand/mjane.jpg",
       launchNote:
         "Calzado de dama, 3 colores. Pídelos con antelación — pedido mínimo 15 pares (una unidad de cada color y talla).",
     },
@@ -145,10 +146,11 @@ async function main() {
   });
   const mJane = await prisma.collection.upsert({
     where: { name: "M Jane" },
-    update: {},
+    update: { imageUrl: "/brand/mjane.jpg" },
     create: {
       name: "M Jane",
       upcoming: true,
+      imageUrl: "/brand/mjane.jpg",
       launchNote:
         "Calzado de dama, 3 colores. Pídelos con antelación — pedido mínimo 15 pares (una unidad de cada color y talla).",
     },
