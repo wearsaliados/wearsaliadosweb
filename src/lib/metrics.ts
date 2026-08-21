@@ -52,22 +52,26 @@ export async function getAdminDashboardMetrics() {
         (collectionStock.get(collectionName) ?? 0) + item.quantity
       );
 
-      if (item.quantity <= item.product.minStock) {
-        restockNeeded.push({
-          locationName: loc.ally?.businessName ?? loc.name,
-          locationType: loc.type,
-          productName: item.product.name,
-          quantity: item.quantity,
-          minStock: item.product.minStock,
-        });
-      }
-      if (item.quantity === 0) {
-        outOfStock.push({
-          locationName: loc.ally?.businessName ?? loc.name,
-          locationType: loc.type,
-          allyId: loc.allyId,
-          productName: item.product.name,
-        });
+      // La fábrica es la que repone a los demás canales, así que no
+      // genera alertas de reposición sobre sí misma.
+      if (loc.type !== "FACTORY" && item.product.active) {
+        if (item.quantity <= item.product.minStock) {
+          restockNeeded.push({
+            locationName: loc.ally?.businessName ?? loc.name,
+            locationType: loc.type,
+            productName: item.product.name,
+            quantity: item.quantity,
+            minStock: item.product.minStock,
+          });
+        }
+        if (item.quantity === 0) {
+          outOfStock.push({
+            locationName: loc.ally?.businessName ?? loc.name,
+            locationType: loc.type,
+            allyId: loc.allyId,
+            productName: item.product.name,
+          });
+        }
       }
     }
   }

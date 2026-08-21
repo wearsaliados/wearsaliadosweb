@@ -10,11 +10,11 @@ export default function LoginPage() {
           src="/brand/barco-wears.jpg"
           alt=""
           fill
-          className="object-cover opacity-15"
+          className="object-cover opacity-[0.07]"
           sizes="100vw"
           priority
         />
-        <div className="absolute inset-0 bg-wears-black/80" />
+        <div className="absolute inset-0 bg-wears-black/90" />
       </div>
       <div className="relative w-full max-w-sm rounded-2xl border border-wears-tan/20 bg-wears-espresso/40 p-8 shadow-xl backdrop-blur-sm">
         <div className="flex justify-center">

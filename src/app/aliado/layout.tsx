@@ -35,15 +35,17 @@ export default async function AllyLayout({
               src="/brand/barco-wears.jpg"
               alt=""
               fill
-              className="object-cover opacity-15"
+              className="object-cover opacity-[0.07]"
               sizes="256px"
             />
-            <div className="absolute inset-0 bg-wears-black/85" />
+            <div className="absolute inset-0 bg-wears-black/92" />
           </div>
           <div className="relative">
             <div className="p-6">
               <div className="flex items-center gap-3">
-                <WearsAnchorLogo className="h-9 w-9 shrink-0" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-wears-black ring-1 ring-wears-gold/40">
+                  <WearsAnchorLogo className="h-8 w-8" />
+                </div>
                 <div>
                   <p className="text-[10px] tracking-[0.4em] uppercase text-wears-tan">
                     aliadoswears.com

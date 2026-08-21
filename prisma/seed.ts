@@ -202,29 +202,29 @@ async function main() {
   const [deportivos, sandaliasHDA, nauticos, rinoneras] = legacyProducts;
 
   await Promise.all(
-    legacyProducts.map((p, i) =>
+    legacyProducts.map((p) =>
       prisma.inventoryItem.upsert({
         where: { productId_locationId: { productId: p.id, locationId: web.id } },
         update: {},
-        create: { productId: p.id, locationId: web.id, quantity: 8 + i, unitCost: p.cost },
+        create: { productId: p.id, locationId: web.id, quantity: 0, unitCost: p.cost },
       })
     )
   );
   await Promise.all(
-    legacyProducts.map((p, i) =>
+    legacyProducts.map((p) =>
       prisma.inventoryItem.upsert({
         where: { productId_locationId: { productId: p.id, locationId: store.id } },
         update: {},
-        create: { productId: p.id, locationId: store.id, quantity: 5 + i, unitCost: p.cost },
+        create: { productId: p.id, locationId: store.id, quantity: 0, unitCost: p.cost },
       })
     )
   );
   await Promise.all(
-    legacyProducts.map((p, i) =>
+    legacyProducts.map((p) =>
       prisma.inventoryItem.upsert({
         where: { productId_locationId: { productId: p.id, locationId: factory.id } },
         update: {},
-        create: { productId: p.id, locationId: factory.id, quantity: 25 + i * 3, unitCost: p.cost },
+        create: { productId: p.id, locationId: factory.id, quantity: 0, unitCost: p.cost },
       })
     )
   );

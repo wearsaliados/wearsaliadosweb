@@ -56,9 +56,10 @@ export default function MovementForm({
         ))}
       </select>
       <input
-        name="quantityDelta"
+        name="quantity"
         type="number"
-        placeholder="Cantidad (+ entra, - sale)"
+        min={1}
+        placeholder="Cantidad recibida"
         required
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
       />
@@ -72,7 +73,7 @@ export default function MovementForm({
         disabled={pending}
         className="rounded-full bg-wears-gold px-4 py-2 text-sm font-medium text-wears-black hover:bg-wears-tan disabled:opacity-60"
       >
-        {pending ? "Guardando..." : "Registrar movimiento"}
+        {pending ? "Guardando..." : "Registrar entrada"}
       </button>
       {state.error && (
         <p className="text-sm text-red-600 sm:col-span-2 lg:col-span-5">{state.error}</p>

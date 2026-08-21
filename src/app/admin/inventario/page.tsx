@@ -3,7 +3,10 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getStockStatus, STOCK_STATUS_LABEL, STOCK_STATUS_CLASSES } from "@/lib/inventory";
 import MovementForm from "./movement-form";
+import TransferForm from "./transfer-form";
 import LocationForm from "./location-form";
+import { setInventoryQuantity } from "./actions";
+import DeleteItemButton from "./delete-item-button";
 
 const LOCATION_TYPE_LABEL: Record<string, string> = {
   WEB: "Tienda en línea",
@@ -15,14 +18,23 @@ const LOCATION_TYPE_LABEL: Record<string, string> = {
 export default async function InventarioPage() {
   await requireAdmin();
 
-  const [nonAllyLocations, products] = await Promise.all([
+  const [nonAllyLocations, products, allies] = await Promise.all([
     prisma.location.findMany({
       where: { type: { not: "ALLY" } },
       include: { inventoryItems: { include: { product: true } } },
       orderBy: [{ type: "asc" }, { name: "asc" }],
     }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    prisma.ally.findMany({
+      where: { active: true },
+      include: { location: true },
+      orderBy: { businessName: "asc" },
+    }),
   ]);
+
+  const allyOptions = allies
+    .filter((a) => a.location)
+    .map((a) => ({ id: a.id, locationId: a.location!.id, businessName: a.businessName }));
 
   return (
     <div className="flex flex-col gap-8">
@@ -41,13 +53,27 @@ export default async function InventarioPage() {
         </p>
       </div>
 
-      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
-        <h2 className="mb-3 font-semibold text-wears-black">
-          Nuevo movimiento (entradas / salidas / reposición)
+      <section className="rounded-xl border border-wears-gold/40 bg-white p-5 shadow-sm">
+        <h2 className="mb-1 font-semibold text-wears-black">
+          Transferir / dar salida a mercancía
         </h2>
         <p className="mb-3 text-xs text-wears-espresso/50">
-          Elige la ubicación (por ejemplo “Fábrica”) para registrar entradas
-          de mercancía nueva o ajustes de stock.
+          Cuando la fábrica entrega mercancía, elige a dónde va — a un aliado
+          comercial, al punto físico o a la tienda en línea — así queda un
+          registro claro del motivo de cada salida.
+        </p>
+        <TransferForm
+          locations={nonAllyLocations.map((l) => ({ id: l.id, name: l.name }))}
+          allies={allyOptions}
+          products={products}
+        />
+      </section>
+
+      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
+        <h2 className="mb-3 font-semibold text-wears-black">Recibir mercancía nueva</h2>
+        <p className="mb-3 text-xs text-wears-espresso/50">
+          Para cuando entra mercancía nueva a un canal de Wears (por ejemplo,
+          producción que llega a la fábrica).
         </p>
         <MovementForm
           locations={nonAllyLocations.map((l) => ({ id: l.id, name: l.name }))}
@@ -79,15 +105,32 @@ export default async function InventarioPage() {
                     <th className="py-2 pr-4">Producto</th>
                     <th className="py-2 pr-4">Cantidad</th>
                     <th className="py-2 pr-4">Estado</th>
+                    <th className="py-2 pr-4" />
                   </tr>
                 </thead>
                 <tbody>
-                  {loc.inventoryItems.map((item) => {
+                  {loc.inventoryItems.filter((item) => item.product.active).map((item) => {
                     const status = getStockStatus(item.quantity, item.product.minStock);
                     return (
                       <tr key={item.id} className="border-b border-wears-tan/10">
                         <td className="py-2 pr-4">{item.product.name}</td>
-                        <td className="py-2 pr-4">{item.quantity}</td>
+                        <td className="py-2 pr-4">
+                          <form
+                            action={setInventoryQuantity.bind(null, item.id)}
+                            className="flex items-center gap-1"
+                          >
+                            <input
+                              type="number"
+                              name="quantity"
+                              defaultValue={item.quantity}
+                              min={0}
+                              className="w-16 rounded border border-wears-tan/30 px-2 py-1 text-xs"
+                            />
+                            <button className="text-xs text-wears-gold hover:underline">
+                              Guardar
+                            </button>
+                          </form>
+                        </td>
                         <td className="py-2 pr-4">
                           <span
                             className={`rounded-full border px-2 py-0.5 text-xs ${STOCK_STATUS_CLASSES[status]}`}
@@ -95,12 +138,18 @@ export default async function InventarioPage() {
                             {STOCK_STATUS_LABEL[status]}
                           </span>
                         </td>
+                        <td className="py-2 pr-4">
+                          <DeleteItemButton
+                            inventoryItemId={item.id}
+                            productName={item.product.name}
+                          />
+                        </td>
                       </tr>
                     );
                   })}
-                  {loc.inventoryItems.length === 0 && (
+                  {loc.inventoryItems.filter((item) => item.product.active).length === 0 && (
                     <tr>
-                      <td colSpan={3} className="py-3 text-center text-wears-espresso/50">
+                      <td colSpan={4} className="py-3 text-center text-wears-espresso/50">
                         Sin existencias registradas.
                       </td>
                     </tr>

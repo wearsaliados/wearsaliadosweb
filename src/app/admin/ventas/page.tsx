@@ -11,7 +11,10 @@ export default async function VentasPage() {
     take: 200,
   });
 
-  const totalRevenue = sales.reduce((s, sale) => s + sale.quantity * sale.unitPrice, 0);
+  const totalWearsProfit = sales.reduce(
+    (s, sale) => s + (sale.unitPrice - sale.unitCost) * sale.quantity,
+    0
+  );
   const totalUnits = sales.reduce((s, sale) => s + sale.quantity, 0);
 
   return (
@@ -22,7 +25,8 @@ export default async function VentasPage() {
         </h1>
         <p className="text-sm text-wears-espresso/60">
           Registro de todas las ventas reportadas por los aliados ({sales.length}{" "}
-          últimas · {totalUnits} unidades · {formatUSD(totalRevenue)}).
+          últimas · {totalUnits} unidades · {formatUSD(totalWearsProfit)} de
+          ganancia para Wears — el resto del valor de venta es del aliado).
         </p>
       </div>
 
@@ -36,7 +40,8 @@ export default async function VentasPage() {
                 <th className="py-2 pr-4">Producto</th>
                 <th className="py-2 pr-4">Cantidad</th>
                 <th className="py-2 pr-4">Precio unitario</th>
-                <th className="py-2 pr-4">Total</th>
+                <th className="py-2 pr-4">Total venta</th>
+                <th className="py-2 pr-4">Ganancia Wears</th>
                 <th className="py-2 pr-4">Nota</th>
               </tr>
             </thead>
@@ -53,12 +58,15 @@ export default async function VentasPage() {
                   <td className="py-2 pr-4 font-medium">
                     {formatUSD(s.quantity * s.unitPrice)}
                   </td>
+                  <td className="py-2 pr-4 text-emerald-600">
+                    {formatUSD((s.unitPrice - s.unitCost) * s.quantity)}
+                  </td>
                   <td className="py-2 pr-4 text-wears-espresso/60">{s.note ?? "—"}</td>
                 </tr>
               ))}
               {sales.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-4 text-center text-wears-espresso/50">
+                  <td colSpan={8} className="py-4 text-center text-wears-espresso/50">
                     Aún no hay ventas registradas.
                   </td>
                 </tr>

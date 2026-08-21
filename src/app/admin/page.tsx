@@ -155,6 +155,10 @@ export default async function AdminDashboardPage() {
             Ver todas
           </Link>
         </div>
+        <p className="mb-3 text-xs text-wears-espresso/50">
+          Estas son ventas de aliados a consignación o compra: se muestra
+          solo la ganancia de Wears, el resto del monto es del aliado.
+        </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -163,7 +167,7 @@ export default async function AdminDashboardPage() {
                 <th className="py-2 pr-4">Aliado</th>
                 <th className="py-2 pr-4">Producto</th>
                 <th className="py-2 pr-4">Cantidad</th>
-                <th className="py-2 pr-4">Total</th>
+                <th className="py-2 pr-4">Ganancia Wears</th>
               </tr>
             </thead>
             <tbody>
@@ -175,7 +179,9 @@ export default async function AdminDashboardPage() {
                   <td className="py-2 pr-4">{s.ally.businessName}</td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
-                  <td className="py-2 pr-4">{formatUSD(s.quantity * s.unitPrice)}</td>
+                  <td className="py-2 pr-4 text-emerald-600">
+                    {formatUSD((s.unitPrice - s.unitCost) * s.quantity)}
+                  </td>
                 </tr>
               ))}
               {m.recentSales.length === 0 && (
