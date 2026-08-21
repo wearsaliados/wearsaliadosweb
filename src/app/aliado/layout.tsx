@@ -32,7 +32,7 @@ export default async function AllyLayout({
         <aside className="relative lg:w-64 shrink-0 overflow-hidden bg-wears-black text-wears-cream">
           <div className="pointer-events-none absolute inset-0">
             <Image
-              src="/activations/promotora.jpg"
+              src="/brand/barco-wears.jpg"
               alt=""
               fill
               className="object-cover opacity-15"
