@@ -274,7 +274,7 @@ async function main() {
       models: ["M Jane Rojo", "M Jane Blanco", "M Jane Verde"],
       sizes: ["35", "36", "37", "38", "39"],
       price: 90,
-      cost: 45,
+      cost: 60,
       minStock: 1,
       collectionId: mJane.id,
     }),
@@ -284,7 +284,7 @@ async function main() {
     sizedVariantDefs.map((v) =>
       prisma.product.upsert({
         where: { sku: v.sku },
-        update: { name: v.name, size: v.size, collectionId: v.collectionId },
+        update: { name: v.name, size: v.size, collectionId: v.collectionId, cost: v.cost, price: v.price },
         create: v,
       })
     )

@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatUSD, getStockStatus, STOCK_STATUS_LABEL, STOCK_STATUS_CLASSES } from "@/lib/inventory";
+import { formatUSD } from "@/lib/inventory";
 import { toggleAllyActive } from "../actions";
 import AssignStockForm from "./assign-stock-form";
 import LedgerForm from "./ledger-form";
 import EditAllyForm from "./edit-ally-form";
 import DeleteAllyButton from "./delete-ally-button";
+import LocationInventoryBrowser from "../../inventario/location-inventory-browser";
 
 export default async function AllyDetailPage({
   params,
@@ -20,7 +21,7 @@ export default async function AllyDetailPage({
     where: { id },
     include: {
       user: true,
-      location: { include: { inventoryItems: { include: { product: true } } } },
+      location: { include: { inventoryItems: { include: { product: { include: { collection: true } } } } } },
       sales: { include: { product: true }, orderBy: { saleDate: "desc" }, take: 30 },
       ledgerEntries: { orderBy: { createdAt: "desc" } },
     },
@@ -84,46 +85,18 @@ export default async function AllyDetailPage({
 
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
         <h2 className="mb-3 font-semibold text-wears-black">Inventario actual</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-wears-tan/20 text-left text-wears-espresso/60">
-                <th className="py-2 pr-4">Producto</th>
-                <th className="py-2 pr-4">Cantidad</th>
-                <th className="py-2 pr-4">Origen</th>
-                <th className="py-2 pr-4">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ally.location?.inventoryItems.map((item) => {
-                const status = getStockStatus(item.quantity, item.product.minStock);
-                return (
-                  <tr key={item.id} className="border-b border-wears-tan/10">
-                    <td className="py-2 pr-4">{item.product.name}</td>
-                    <td className="py-2 pr-4">{item.quantity}</td>
-                    <td className="py-2 pr-4 text-wears-espresso/70">
-                      {item.acquisitionType === "CONSIGNMENT" ? "Consignación" : "Compra"}
-                    </td>
-                    <td className="py-2 pr-4">
-                      <span
-                        className={`rounded-full border px-2 py-0.5 text-xs ${STOCK_STATUS_CLASSES[status]}`}
-                      >
-                        {STOCK_STATUS_LABEL[status]}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-              {(!ally.location || ally.location.inventoryItems.length === 0) && (
-                <tr>
-                  <td colSpan={4} className="py-4 text-center text-wears-espresso/50">
-                    Este aliado aún no tiene inventario asignado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <LocationInventoryBrowser
+          items={(ally.location?.inventoryItems ?? []).map((item) => ({
+            id: item.id,
+            name: item.product.name,
+            size: item.product.size,
+            quantity: item.quantity,
+            minStock: item.product.minStock,
+            collectionId: item.product.collectionId ?? "sin-coleccion",
+            collectionName: item.product.collection?.name ?? "Otros productos",
+            acquisitionType: item.acquisitionType,
+          }))}
+        />
       </section>
 
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">

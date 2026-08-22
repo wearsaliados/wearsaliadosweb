@@ -1,11 +1,30 @@
 import Link from "next/link";
 import { getAdminDashboardMetrics } from "@/lib/metrics";
+import { prisma } from "@/lib/prisma";
 import { formatUSD } from "@/lib/inventory";
 import StatCard from "@/components/stat-card";
 import BarList from "@/components/bar-list";
+import ProductSearch from "@/components/product-search";
 
 export default async function AdminDashboardPage() {
-  const m = await getAdminDashboardMetrics();
+  const [m, inventoryItems] = await Promise.all([
+    getAdminDashboardMetrics(),
+    prisma.inventoryItem.findMany({
+      where: { product: { active: true } },
+      include: {
+        product: { include: { collection: true } },
+        location: { include: { ally: true } },
+      },
+    }),
+  ]);
+
+  const searchRows = inventoryItems.map((item) => ({
+    productId: item.productId,
+    productName: item.product.name,
+    collectionName: item.product.collection?.name ?? "Otros productos",
+    locationName: item.location.ally?.businessName ?? item.location.name,
+    quantity: item.quantity,
+  }));
 
   return (
     <div className="flex flex-col gap-8">
@@ -18,12 +37,39 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
+      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
+        <h2 className="mb-3 font-semibold text-wears-black">
+          Buscar disponibilidad de un producto
+        </h2>
+        <ProductSearch rows={searchRows} />
+      </section>
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Total unidades" value={m.totalUnits.toString()} />
-        <StatCard label="En tienda en línea" value={m.inventoryByLocationType.WEB.toString()} />
-        <StatCard label="En puntos físicos" value={m.inventoryByLocationType.STORE.toString()} />
-        <StatCard label="En fábrica (reposición)" value={m.inventoryByLocationType.FACTORY.toString()} />
-        <StatCard label="En aliados comerciales" value={m.inventoryByLocationType.ALLY.toString()} />
+        <StatCard
+          label="Total unidades"
+          value={m.totalUnits.toString()}
+          hint={`${formatUSD(m.totalInventoryValue)} a costo`}
+        />
+        <StatCard
+          label="En tienda en línea"
+          value={m.inventoryByLocationType.WEB.toString()}
+          hint={`${formatUSD(m.inventoryValueByLocationType.WEB)} a costo`}
+        />
+        <StatCard
+          label="En puntos físicos"
+          value={m.inventoryByLocationType.STORE.toString()}
+          hint={`${formatUSD(m.inventoryValueByLocationType.STORE)} a costo`}
+        />
+        <StatCard
+          label="En fábrica (reposición)"
+          value={m.inventoryByLocationType.FACTORY.toString()}
+          hint={`${formatUSD(m.inventoryValueByLocationType.FACTORY)} a costo`}
+        />
+        <StatCard
+          label="En aliados comerciales"
+          value={m.inventoryByLocationType.ALLY.toString()}
+          hint={`${formatUSD(m.inventoryValueByLocationType.ALLY)} a costo`}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -108,7 +154,11 @@ export default async function AdminDashboardPage() {
             Existencias por colección
           </h2>
           <BarList
-            items={m.collectionStock.map((c) => ({ name: c.name, value: c.quantity }))}
+            items={m.collectionStock.map((c) => ({
+              name: c.name,
+              value: c.quantity,
+              hint: formatUSD(c.value) + " a costo",
+            }))}
             colorClass="bg-wears-gold"
             formatValue={(v) => `${v} und.`}
           />

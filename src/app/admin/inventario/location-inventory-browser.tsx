@@ -14,6 +14,7 @@ export type LocationItem = {
   minStock: number;
   collectionId: string;
   collectionName: string;
+  acquisitionType?: "PURCHASE" | "CONSIGNMENT";
 };
 
 function modelNameOf(item: LocationItem) {
@@ -138,6 +139,7 @@ export default function LocationInventoryBrowser({ items }: { items: LocationIte
               <tr className="border-b border-wears-tan/20 text-left text-wears-espresso/60">
                 <th className="py-2 pr-4">{variantsOfModel[0]?.size ? "Talla" : "Producto"}</th>
                 <th className="py-2 pr-4">Cantidad</th>
+                {variantsOfModel[0]?.acquisitionType && <th className="py-2 pr-4">Origen</th>}
                 <th className="py-2 pr-4">Estado</th>
                 <th className="py-2 pr-4" />
               </tr>
@@ -165,6 +167,11 @@ export default function LocationInventoryBrowser({ items }: { items: LocationIte
                         <button className="text-xs text-wears-gold hover:underline">Guardar</button>
                       </form>
                     </td>
+                    {item.acquisitionType && (
+                      <td className="py-2 pr-4 text-wears-espresso/70">
+                        {item.acquisitionType === "CONSIGNMENT" ? "Consignación" : "Compra"}
+                      </td>
+                    )}
                     <td className="py-2 pr-4">
                       <span
                         className={`rounded-full border px-2 py-0.5 text-xs ${STOCK_STATUS_CLASSES[status]}`}

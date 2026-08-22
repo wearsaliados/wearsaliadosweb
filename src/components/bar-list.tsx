@@ -3,7 +3,7 @@ export default function BarList({
   colorClass = "bg-wears-gold",
   formatValue,
 }: {
-  items: { name: string; value: number }[];
+  items: { name: string; value: number; hint?: string }[];
   colorClass?: string;
   formatValue?: (value: number) => string;
 }) {
@@ -18,7 +18,12 @@ export default function BarList({
       {items.map((item) => (
         <li key={item.name}>
           <div className="mb-1 flex items-center justify-between text-sm">
-            <span className="text-wears-black">{item.name}</span>
+            <span className="text-wears-black">
+              {item.name}
+              {item.hint && (
+                <span className="ml-2 text-xs text-wears-espresso/50">{item.hint}</span>
+              )}
+            </span>
             <span className="font-medium text-wears-espresso">
               {formatValue ? formatValue(item.value) : item.value}
             </span>

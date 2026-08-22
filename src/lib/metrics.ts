@@ -18,10 +18,12 @@ export async function getAdminDashboardMetrics() {
   ]);
 
   const inventoryByLocationType = { WEB: 0, STORE: 0, FACTORY: 0, ALLY: 0 };
+  const inventoryValueByLocationType = { WEB: 0, STORE: 0, FACTORY: 0, ALLY: 0 };
   let totalUnits = 0;
+  let totalInventoryValue = 0;
   let totalConsignmentValue = 0;
   let totalConsignmentUnits = 0;
-  const collectionStock = new Map<string, number>();
+  const collectionStock = new Map<string, { quantity: number; value: number }>();
   const restockNeeded: {
     locationName: string;
     locationType: string;
@@ -38,19 +40,22 @@ export async function getAdminDashboardMetrics() {
 
   for (const loc of locations) {
     for (const item of loc.inventoryItems) {
+      const itemValue = item.quantity * item.unitCost;
       inventoryByLocationType[loc.type] += item.quantity;
+      inventoryValueByLocationType[loc.type] += itemValue;
       totalUnits += item.quantity;
+      totalInventoryValue += itemValue;
 
       if (item.acquisitionType === "CONSIGNMENT" && loc.type === "ALLY") {
-        totalConsignmentValue += item.quantity * item.unitCost;
+        totalConsignmentValue += itemValue;
         totalConsignmentUnits += item.quantity;
       }
 
       const collectionName = item.product.collection?.name ?? "Sin colección";
-      collectionStock.set(
-        collectionName,
-        (collectionStock.get(collectionName) ?? 0) + item.quantity
-      );
+      const current = collectionStock.get(collectionName) ?? { quantity: 0, value: 0 };
+      current.quantity += item.quantity;
+      current.value += itemValue;
+      collectionStock.set(collectionName, current);
 
       // La fábrica es la que repone a los demás canales, así que no
       // genera alertas de reposición sobre sí misma.
@@ -123,11 +128,13 @@ export async function getAdminDashboardMetrics() {
 
   return {
     inventoryByLocationType,
+    inventoryValueByLocationType,
     totalUnits,
+    totalInventoryValue,
     totalConsignmentValue,
     totalConsignmentUnits,
     collectionStock: [...collectionStock.entries()]
-      .map(([name, quantity]) => ({ name, quantity }))
+      .map(([name, v]) => ({ name, quantity: v.quantity, value: v.value }))
       .sort((a, b) => b.quantity - a.quantity),
     restockNeeded,
     outOfStock,
