@@ -12,6 +12,7 @@ const links = [
   { href: "/admin/productos", label: "Productos" },
   { href: "/admin/aliados", label: "Aliados comerciales" },
   { href: "/admin/ventas", label: "Ventas" },
+  { href: "/admin/movimientos", label: "Movimientos" },
   { href: "/admin/reposicion", label: "Reposición" },
   { href: "/admin/soporte", label: "Soporte" },
   { href: "/admin/configuracion", label: "Notificaciones" },

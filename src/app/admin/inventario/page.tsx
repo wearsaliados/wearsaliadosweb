@@ -1,12 +1,10 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getStockStatus, STOCK_STATUS_LABEL, STOCK_STATUS_CLASSES } from "@/lib/inventory";
 import MovementForm from "./movement-form";
 import TransferForm from "./transfer-form";
 import LocationForm from "./location-form";
-import { setInventoryQuantity } from "./actions";
-import DeleteItemButton from "./delete-item-button";
+import LocationInventoryBrowser from "./location-inventory-browser";
 
 const LOCATION_TYPE_LABEL: Record<string, string> = {
   WEB: "Tienda en línea",
@@ -21,7 +19,7 @@ export default async function InventarioPage() {
   const [nonAllyLocations, products, allies] = await Promise.all([
     prisma.location.findMany({
       where: { type: { not: "ALLY" } },
-      include: { inventoryItems: { include: { product: true } } },
+      include: { inventoryItems: { include: { product: { include: { collection: true } } } } },
       orderBy: [{ type: "asc" }, { name: "asc" }],
     }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
@@ -98,65 +96,19 @@ export default async function InventarioPage() {
                 {LOCATION_TYPE_LABEL[loc.type]}
               </span>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-wears-tan/20 text-left text-wears-espresso/60">
-                    <th className="py-2 pr-4">Producto</th>
-                    <th className="py-2 pr-4">Cantidad</th>
-                    <th className="py-2 pr-4">Estado</th>
-                    <th className="py-2 pr-4" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {loc.inventoryItems.filter((item) => item.product.active).map((item) => {
-                    const status = getStockStatus(item.quantity, item.product.minStock);
-                    return (
-                      <tr key={item.id} className="border-b border-wears-tan/10">
-                        <td className="py-2 pr-4">{item.product.name}</td>
-                        <td className="py-2 pr-4">
-                          <form
-                            action={setInventoryQuantity.bind(null, item.id)}
-                            className="flex items-center gap-1"
-                          >
-                            <input
-                              type="number"
-                              name="quantity"
-                              defaultValue={item.quantity}
-                              min={0}
-                              className="w-16 rounded border border-wears-tan/30 px-2 py-1 text-xs"
-                            />
-                            <button className="text-xs text-wears-gold hover:underline">
-                              Guardar
-                            </button>
-                          </form>
-                        </td>
-                        <td className="py-2 pr-4">
-                          <span
-                            className={`rounded-full border px-2 py-0.5 text-xs ${STOCK_STATUS_CLASSES[status]}`}
-                          >
-                            {STOCK_STATUS_LABEL[status]}
-                          </span>
-                        </td>
-                        <td className="py-2 pr-4">
-                          <DeleteItemButton
-                            inventoryItemId={item.id}
-                            productName={item.product.name}
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {loc.inventoryItems.filter((item) => item.product.active).length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="py-3 text-center text-wears-espresso/50">
-                        Sin existencias registradas.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <LocationInventoryBrowser
+              items={loc.inventoryItems
+                .filter((item) => item.product.active)
+                .map((item) => ({
+                  id: item.id,
+                  name: item.product.name,
+                  size: item.product.size,
+                  quantity: item.quantity,
+                  minStock: item.product.minStock,
+                  collectionId: item.product.collectionId ?? "sin-coleccion",
+                  collectionName: item.product.collection?.name ?? "Otros productos",
+                }))}
+            />
           </section>
         ))}
       </div>

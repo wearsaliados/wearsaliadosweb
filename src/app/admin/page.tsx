@@ -18,36 +18,6 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      {m.outOfStock.length > 0 && (
-        <section className="rounded-xl border-2 border-red-400 bg-red-50 p-5 shadow-sm">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 font-semibold text-red-800">
-              🔴 {m.outOfStock.length} producto{m.outOfStock.length === 1 ? "" : "s"} agotado
-              {m.outOfStock.length === 1 ? "" : "s"} — requiere reposición urgente
-            </h2>
-            <Link href="/admin/reposicion" className="text-sm text-red-700 hover:underline">
-              Ver detalle
-            </Link>
-          </div>
-          <ul className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-            {m.outOfStock.slice(0, 9).map((r, i) => (
-              <li
-                key={i}
-                className="rounded-lg border border-red-300 bg-white px-3 py-2"
-              >
-                <p className="font-medium text-wears-black">{r.productName}</p>
-                <p className="text-xs text-red-700">{r.locationName} — 0 disponibles</p>
-              </li>
-            ))}
-          </ul>
-          {m.outOfStock.length > 9 && (
-            <p className="mt-2 text-xs text-red-700">
-              y {m.outOfStock.length - 9} más...
-            </p>
-          )}
-        </section>
-      )}
-
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard label="Total unidades" value={m.totalUnits.toString()} />
         <StatCard label="En tienda en línea" value={m.inventoryByLocationType.WEB.toString()} />
@@ -70,14 +40,27 @@ export default async function AdminDashboardPage() {
         />
         <StatCard
           label="Productos por reponer"
-          value={m.restockNeeded.length.toString()}
-          tone={m.restockNeeded.length > 0 ? "critical" : "default"}
-          hint="En fábrica, tiendas y aliados"
+          value={m.outOfStock.length.toString()}
+          tone={m.outOfStock.length > 0 ? "critical" : "default"}
+          hint="Agotados en tienda, puntos físicos y aliados"
         />
         <StatCard
           label="Solicitudes de soporte pendientes"
           value={m.pendingSupportCount.toString()}
           tone={m.pendingSupportCount > 0 ? "warning" : "default"}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <StatCard
+          label="Ventas en tienda web"
+          value={formatUSD(m.directSales.WEB.revenue)}
+          hint={`${m.directSales.WEB.units} unidades vendidas`}
+        />
+        <StatCard
+          label="Ventas en tienda física"
+          value={formatUSD(m.directSales.STORE.revenue)}
+          hint={`${m.directSales.STORE.units} unidades vendidas`}
         />
       </div>
 
@@ -156,18 +139,19 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
         <p className="mb-3 text-xs text-wears-espresso/50">
-          Estas son ventas de aliados a consignación o compra: se muestra
-          solo la ganancia de Wears, el resto del monto es del aliado.
+          En ventas de aliados se muestra solo la ganancia de Wears (el resto
+          es del aliado); en ventas directas de tienda web o punto físico se
+          muestra el valor completo, porque es 100% de Wears.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-wears-tan/20 text-left text-wears-espresso/60">
                 <th className="py-2 pr-4">Fecha</th>
-                <th className="py-2 pr-4">Aliado</th>
+                <th className="py-2 pr-4">Canal</th>
                 <th className="py-2 pr-4">Producto</th>
                 <th className="py-2 pr-4">Cantidad</th>
-                <th className="py-2 pr-4">Ganancia Wears</th>
+                <th className="py-2 pr-4">Para Wears</th>
               </tr>
             </thead>
             <tbody>
@@ -176,11 +160,15 @@ export default async function AdminDashboardPage() {
                   <td className="py-2 pr-4 text-wears-espresso/70">
                     {s.saleDate.toLocaleDateString("es-CO")}
                   </td>
-                  <td className="py-2 pr-4">{s.ally.businessName}</td>
+                  <td className="py-2 pr-4">{s.ally?.businessName ?? s.location.name}</td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
                   <td className="py-2 pr-4 text-emerald-600">
-                    {formatUSD((s.unitPrice - s.unitCost) * s.quantity)}
+                    {formatUSD(
+                      s.ally
+                        ? (s.unitPrice - s.unitCost) * s.quantity
+                        : s.unitPrice * s.quantity
+                    )}
                   </td>
                 </tr>
               ))}
@@ -196,29 +184,27 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      {m.restockNeeded.length > 0 && (
-        <section className="rounded-xl border border-red-300 bg-red-50 p-5 shadow-sm">
+      {m.outOfStock.length > 0 && (
+        <section className="rounded-xl border-2 border-red-400 bg-red-50 p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold text-red-800">
-              Productos que necesitan reposición
+              🔴 Productos que necesitan reposición ({m.outOfStock.length})
             </h2>
             <Link href="/admin/reposicion" className="text-sm text-red-700 hover:underline">
               Ver detalle
             </Link>
           </div>
           <ul className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-            {m.restockNeeded.slice(0, 9).map((r, i) => (
-              <li
-                key={i}
-                className="rounded-lg border border-red-200 bg-white px-3 py-2"
-              >
+            {m.outOfStock.slice(0, 9).map((r, i) => (
+              <li key={i} className="rounded-lg border border-red-300 bg-white px-3 py-2">
                 <p className="font-medium text-wears-black">{r.productName}</p>
-                <p className="text-xs text-wears-espresso/60">
-                  {r.locationName} — {r.quantity} disponibles (mínimo {r.minStock})
-                </p>
+                <p className="text-xs text-red-700">{r.locationName} — 0 disponibles</p>
               </li>
             ))}
           </ul>
+          {m.outOfStock.length > 9 && (
+            <p className="mt-2 text-xs text-red-700">y {m.outOfStock.length - 9} más...</p>
+          )}
         </section>
       )}
     </div>

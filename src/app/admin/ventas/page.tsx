@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatUSD } from "@/lib/inventory";
@@ -6,6 +7,7 @@ export default async function VentasPage() {
   await requireAdmin();
 
   const sales = await prisma.sale.findMany({
+    where: { allyId: { not: null } },
     include: { product: true, ally: true },
     orderBy: { saleDate: "desc" },
     take: 200,
@@ -26,7 +28,12 @@ export default async function VentasPage() {
         <p className="text-sm text-wears-espresso/60">
           Registro de todas las ventas reportadas por los aliados ({sales.length}{" "}
           últimas · {totalUnits} unidades · {formatUSD(totalWearsProfit)} de
-          ganancia para Wears — el resto del valor de venta es del aliado).
+          ganancia para Wears — el resto del valor de venta es del aliado). Para
+          ventas directas de la tienda en línea o el punto físico, mira{" "}
+          <Link href="/admin/movimientos" className="text-wears-gold hover:underline">
+            Movimientos
+          </Link>
+          .
         </p>
       </div>
 
@@ -51,7 +58,7 @@ export default async function VentasPage() {
                   <td className="py-2 pr-4 text-wears-espresso/70">
                     {s.saleDate.toLocaleString("es-CO")}
                   </td>
-                  <td className="py-2 pr-4">{s.ally.businessName}</td>
+                  <td className="py-2 pr-4">{s.ally?.businessName}</td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
                   <td className="py-2 pr-4">{formatUSD(s.unitPrice)}</td>

@@ -172,8 +172,8 @@ model InventoryMovement {
 
 model Sale {
   id         String   @id @default(cuid())
-  allyId     String
-  ally       Ally     @relation(fields: [allyId], references: [id])
+  allyId     String?
+  ally       Ally?    @relation(fields: [allyId], references: [id])
   locationId String
   location   Location @relation(fields: [locationId], references: [id])
   productId  String

@@ -10,7 +10,7 @@ export async function getAdminDashboardMetrics() {
       },
     }),
     prisma.sale.findMany({
-      include: { product: true, ally: true },
+      include: { product: true, ally: true, location: true },
       orderBy: { saleDate: "desc" },
     }),
     prisma.ledgerEntry.findMany({ include: { ally: true } }),
@@ -78,16 +78,22 @@ export async function getAdminDashboardMetrics() {
 
   const salesByAlly = new Map<string, { name: string; units: number; revenue: number }>();
   const salesByProduct = new Map<string, { name: string; units: number }>();
+  const directSales = { WEB: { units: 0, revenue: 0 }, STORE: { units: 0, revenue: 0 } };
 
   for (const sale of sales) {
-    const allyEntry = salesByAlly.get(sale.allyId) ?? {
-      name: sale.ally.businessName,
-      units: 0,
-      revenue: 0,
-    };
-    allyEntry.units += sale.quantity;
-    allyEntry.revenue += sale.quantity * sale.unitPrice;
-    salesByAlly.set(sale.allyId, allyEntry);
+    if (sale.ally) {
+      const allyEntry = salesByAlly.get(sale.allyId!) ?? {
+        name: sale.ally.businessName,
+        units: 0,
+        revenue: 0,
+      };
+      allyEntry.units += sale.quantity;
+      allyEntry.revenue += sale.quantity * sale.unitPrice;
+      salesByAlly.set(sale.allyId!, allyEntry);
+    } else if (sale.location.type === "WEB" || sale.location.type === "STORE") {
+      directSales[sale.location.type].units += sale.quantity;
+      directSales[sale.location.type].revenue += sale.quantity * sale.unitPrice;
+    }
 
     const productEntry = salesByProduct.get(sale.productId) ?? {
       name: sale.product.name,
@@ -131,6 +137,7 @@ export async function getAdminDashboardMetrics() {
     bottomProducts: [...productsRanking].reverse().slice(0, 5),
     totalDebt,
     alliesWithDebt,
+    directSales,
     pendingSupportCount,
     recentSales: sales.slice(0, 8),
     allyCount: locations.filter((l) => l.type === "ALLY").length,
