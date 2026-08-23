@@ -34,75 +34,6 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-@keyframes wears-kenburns {
-  0% {
-    transform: scale(1.06) translate(0, 0);
-  }
-  100% {
-    transform: scale(1.16) translate(-1.5%, -1%);
-  }
-}
-
-@keyframes wears-sail {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  25% {
-    transform: translate(-0.8%, -1.2%) rotate(-0.5deg);
-  }
-  50% {
-    transform: translate(0.5%, 0.6%) rotate(0.35deg);
-  }
-  75% {
-    transform: translate(-0.4%, 0.9%) rotate(-0.25deg);
-  }
-}
-
-@keyframes wears-wave-drift {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes wears-wave-drift-rev {
-  0% {
-    transform: translateX(-50%);
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
-
-@keyframes wears-shimmer {
-  0% {
-    transform: translateX(-15%);
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 0.6;
-  }
-  100% {
-    transform: translateX(15%);
-    opacity: 0.35;
-  }
-}
-
-@keyframes wears-glow-pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.08);
-  }
-}
-
 .wears-sea-bg {
   background: linear-gradient(
     to bottom,
@@ -112,10 +43,4 @@ body {
     #1c6f80 75%,
     #2a8d92 100%
   );
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .wears-motion {
-    animation: none !important;
-  }
 }
