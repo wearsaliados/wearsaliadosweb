@@ -19,11 +19,16 @@ export async function getAdminDashboardMetrics() {
 
   const inventoryByLocationType = { WEB: 0, STORE: 0, FACTORY: 0, ALLY: 0 };
   const inventoryValueByLocationType = { WEB: 0, STORE: 0, FACTORY: 0, ALLY: 0 };
+  const inventoryManufacturingValueByLocationType = { WEB: 0, STORE: 0, FACTORY: 0, ALLY: 0 };
+  const inventorySaleValueByLocationType = { WEB: 0, STORE: 0, FACTORY: 0, ALLY: 0 };
   let totalUnits = 0;
   let totalInventoryValue = 0;
   let totalConsignmentValue = 0;
   let totalConsignmentUnits = 0;
-  const collectionStock = new Map<string, { quantity: number; value: number }>();
+  const collectionStock = new Map<
+    string,
+    { quantity: number; value: number; manufacturingValue: number; saleValue: number }
+  >();
   const restockNeeded: {
     locationName: string;
     locationType: string;
@@ -41,8 +46,12 @@ export async function getAdminDashboardMetrics() {
   for (const loc of locations) {
     for (const item of loc.inventoryItems) {
       const itemValue = item.quantity * item.unitCost;
+      const itemManufacturingValue = item.quantity * item.product.manufacturingCost;
+      const itemSaleValue = item.quantity * item.product.price;
       inventoryByLocationType[loc.type] += item.quantity;
       inventoryValueByLocationType[loc.type] += itemValue;
+      inventoryManufacturingValueByLocationType[loc.type] += itemManufacturingValue;
+      inventorySaleValueByLocationType[loc.type] += itemSaleValue;
       totalUnits += item.quantity;
       totalInventoryValue += itemValue;
 
@@ -52,9 +61,16 @@ export async function getAdminDashboardMetrics() {
       }
 
       const collectionName = item.product.collection?.name ?? "Sin colección";
-      const current = collectionStock.get(collectionName) ?? { quantity: 0, value: 0 };
+      const current = collectionStock.get(collectionName) ?? {
+        quantity: 0,
+        value: 0,
+        manufacturingValue: 0,
+        saleValue: 0,
+      };
       current.quantity += item.quantity;
       current.value += itemValue;
+      current.manufacturingValue += itemManufacturingValue;
+      current.saleValue += itemSaleValue;
       collectionStock.set(collectionName, current);
 
       // La fábrica es la que repone a los demás canales, así que no
@@ -111,6 +127,44 @@ export async function getAdminDashboardMetrics() {
   const alliesRanking = [...salesByAlly.values()].sort((a, b) => b.units - a.units);
   const productsRanking = [...salesByProduct.values()].sort((a, b) => b.units - a.units);
 
+  // Rentabilidad: ganancia real de Wears por canal (aliados = solo margen,
+  // tienda web/física = valor completo de la venta) agrupada por día, mes y año.
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+  function emptyProfitBucket() {
+    return { web: 0, store: 0, ally: 0, total: 0 };
+  }
+  const profitability = {
+    daily: emptyProfitBucket(),
+    monthly: emptyProfitBucket(),
+    annual: emptyProfitBucket(),
+  };
+
+  for (const sale of sales) {
+    const profit = sale.ally
+      ? (sale.unitPrice - sale.unitCost) * sale.quantity
+      : sale.unitPrice * sale.quantity;
+    const channel: "web" | "store" | "ally" | null = sale.ally
+      ? "ally"
+      : sale.location.type === "WEB"
+        ? "web"
+        : sale.location.type === "STORE"
+          ? "store"
+          : null;
+    if (!channel) continue;
+
+    const applyTo = (bucket: { web: number; store: number; ally: number; total: number }) => {
+      bucket[channel] += profit;
+      bucket.total += profit;
+    };
+    if (sale.saleDate >= startOfDay) applyTo(profitability.daily);
+    if (sale.saleDate >= startOfMonth) applyTo(profitability.monthly);
+    if (sale.saleDate >= startOfYear) applyTo(profitability.annual);
+  }
+
   const debtByAlly = new Map<string, { name: string; balance: number }>();
   for (const entry of ledgerEntries) {
     const current = debtByAlly.get(entry.allyId) ?? {
@@ -129,12 +183,20 @@ export async function getAdminDashboardMetrics() {
   return {
     inventoryByLocationType,
     inventoryValueByLocationType,
+    inventoryManufacturingValueByLocationType,
+    inventorySaleValueByLocationType,
     totalUnits,
     totalInventoryValue,
     totalConsignmentValue,
     totalConsignmentUnits,
     collectionStock: [...collectionStock.entries()]
-      .map(([name, v]) => ({ name, quantity: v.quantity, value: v.value }))
+      .map(([name, v]) => ({
+        name,
+        quantity: v.quantity,
+        value: v.value,
+        manufacturingValue: v.manufacturingValue,
+        saleValue: v.saleValue,
+      }))
       .sort((a, b) => b.quantity - a.quantity),
     restockNeeded,
     outOfStock,
@@ -145,6 +207,7 @@ export async function getAdminDashboardMetrics() {
     totalDebt,
     alliesWithDebt,
     directSales,
+    profitability,
     pendingSupportCount,
     recentSales: sales.slice(0, 8),
     allyCount: locations.filter((l) => l.type === "ALLY").length,

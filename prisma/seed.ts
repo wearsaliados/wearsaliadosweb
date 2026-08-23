@@ -22,6 +22,7 @@ type SizedVariant = {
   size: string;
   price: number;
   cost: number;
+  manufacturingCost: number;
   minStock: number;
   collectionId: string;
 };
@@ -33,6 +34,7 @@ function buildSizedModels(opts: {
   sizes: string[];
   price: number;
   cost: number;
+  manufacturingCost: number;
   minStock: number;
   collectionId: string;
   quantityPerVariant?: number;
@@ -46,6 +48,7 @@ function buildSizedModels(opts: {
         size,
         price: opts.price,
         cost: opts.cost,
+        manufacturingCost: opts.manufacturingCost,
         minStock: opts.minStock,
         collectionId: opts.collectionId,
       });
@@ -88,7 +91,7 @@ async function main() {
   });
 
   // Limpieza del catálogo de demostración muy antiguo (ya reemplazado por el catálogo real)
-  const veryOldSkus = ["WR-BOT-001", "WR-BOT-002", "WR-BOL-001", "WR-CIN-001", "WR-MOR-001", "WR-PROX-001"];
+  const veryOldSkus = ["WR-BOT-001", "WR-BOT-002", "WR-BOL-001", "WR-CIN-001", "WR-MOR-001", "WR-PROX-001", "WR-RIN-001"];
   const veryOldProducts = await prisma.product.findMany({ where: { sku: { in: veryOldSkus } } });
   if (veryOldProducts.length > 0) {
     const ids = veryOldProducts.map((p) => p.id);
@@ -166,40 +169,41 @@ async function main() {
         name: "Deportivos Caballeros DS",
         price: 140,
         cost: 70,
+        manufacturingCost: 50,
         minStock: 8,
         collectionId: dressSneakers.id,
       },
       {
         sku: "WR-SAN-001",
         name: "Sandalias Herencia del Abuelo",
-        price: 80,
+        price: 70,
         cost: 40,
+        manufacturingCost: 25,
         minStock: 10,
         collectionId: herenciaAbuelo.id,
       },
       {
         sku: "WR-NAU-001",
         name: "Náuticos tres ojetes VU",
-        price: 80,
+        price: 75,
         cost: 40,
+        manufacturingCost: 25,
         minStock: 6,
         collectionId: velaUrbanNauticos.id,
       },
-      {
-        sku: "WR-RIN-001",
-        name: "Riñoneras Vela Urban",
-        price: 80,
-        cost: 40,
-        minStock: 2,
-        collectionId: velaUrbanRinoneras.id,
-      },
-    ].map((p) => prisma.product.upsert({ where: { sku: p.sku }, update: {}, create: p }))
+    ].map((p) =>
+      prisma.product.upsert({
+        where: { sku: p.sku },
+        update: { price: p.price, cost: p.cost, manufacturingCost: p.manufacturingCost },
+        create: p,
+      })
+    )
   );
   await prisma.product.updateMany({
     where: { sku: { in: legacyProducts.map((p) => p.sku) } },
     data: { active: false },
   });
-  const [deportivos, sandaliasHDA, nauticos, rinoneras] = legacyProducts;
+  const [deportivos, sandaliasHDA, nauticos] = legacyProducts;
 
   await Promise.all(
     legacyProducts.map((p) =>
@@ -238,6 +242,7 @@ async function main() {
       sizes: ["39", "40", "41", "42", "43", "44", "45"],
       price: 140,
       cost: 70,
+      manufacturingCost: 50,
       minStock: 1,
       collectionId: dressSneakers.id,
     }),
@@ -245,8 +250,9 @@ async function main() {
       skuPrefix: "SAN",
       models: ["Beige cierres", "Azul cierres", "Marrón cierres", "Correa negra", "Correa oro", "Correa caramelo", "Correa vaqueta"],
       sizes: ["38", "39", "40", "41", "42", "43", "44"],
-      price: 80,
+      price: 70,
       cost: 40,
+      manufacturingCost: 25,
       minStock: 1,
       collectionId: herenciaAbuelo.id,
     }),
@@ -254,8 +260,9 @@ async function main() {
       skuPrefix: "NAU",
       models: ["Náuticos Caramelo", "Náuticos Azul", "Náuticos Rojo", "Náuticos Verde"],
       sizes: ["38", "39", "40", "41", "42", "43", "44"],
-      price: 80,
+      price: 75,
       cost: 40,
+      manufacturingCost: 25,
       minStock: 1,
       collectionId: velaUrbanNauticos.id,
     }),
@@ -263,8 +270,9 @@ async function main() {
       skuPrefix: "RIN",
       models: ["Riñonera Caramelo", "Riñonera Azul", "Riñonera Rojo", "Riñonera Verde"],
       sizes: ["Única"],
-      price: 80,
+      price: 75,
       cost: 40,
+      manufacturingCost: 25,
       minStock: 1,
       collectionId: velaUrbanRinoneras.id,
     }),
@@ -275,6 +283,7 @@ async function main() {
       sizes: ["35", "36", "37", "38", "39"],
       price: 90,
       cost: 60,
+      manufacturingCost: 35,
       minStock: 1,
       collectionId: mJane.id,
     }),
@@ -284,7 +293,14 @@ async function main() {
     sizedVariantDefs.map((v) =>
       prisma.product.upsert({
         where: { sku: v.sku },
-        update: { name: v.name, size: v.size, collectionId: v.collectionId, cost: v.cost, price: v.price },
+        update: {
+          name: v.name,
+          size: v.size,
+          collectionId: v.collectionId,
+          cost: v.cost,
+          manufacturingCost: v.manufacturingCost,
+          price: v.price,
+        },
         create: v,
       })
     )
@@ -363,7 +379,7 @@ async function main() {
 
   if (ally2IsNew) {
     const loc2 = await prisma.location.findUniqueOrThrow({ where: { allyId: ally2.id } });
-    for (const p of [sandaliasHDA, nauticos, rinoneras]) {
+    for (const p of [sandaliasHDA, nauticos]) {
       await prisma.inventoryItem.create({
         data: {
           productId: p.id,
@@ -398,11 +414,13 @@ async function main() {
 
     // Inventario inicial entregado a consignación (registrado a nivel de colección;
     // el detalle por modelo y talla se agrega justo debajo)
-    const initialConsignment = [
+    const initialConsignment: { product: { name: string; cost: number }; quantity: number }[] = [
       { product: deportivos, quantity: 35 },
       { product: sandaliasHDA, quantity: 42 },
       { product: nauticos, quantity: 28 },
-      { product: rinoneras, quantity: 8 },
+      // "Riñoneras Vela Urban" ya no tiene un producto genérico WR-RIN-001 propio;
+      // este cargo histórico de consignación se conserva con el mismo nombre y costo.
+      { product: { name: "Riñoneras Vela Urban", cost: 40 }, quantity: 8 },
     ];
 
     for (const { product, quantity } of initialConsignment) {
@@ -585,6 +603,7 @@ async function main() {
     { key: "correasDS", name: "Correas DS" },
     { key: "correasCaballero", name: "Correas de Caballero" },
     { key: "dressSneakersAntigua", name: "Deportivos Dress Sneakers (colección antigua)" },
+    { key: "rinoneras", name: "Riñoneras" },
   ];
   const newCollections: Record<string, { id: string }> = {};
   for (const def of newCollectionDefs) {
@@ -601,18 +620,25 @@ async function main() {
     size: string | null;
     price: number;
     cost: number;
+    manufacturingCost: number;
     collectionId: string;
   }) {
     const name = opts.size && opts.size !== "Única" ? `${opts.model} — Talla ${opts.size}` : opts.model;
     return prisma.product.upsert({
       where: { sku: opts.sku },
-      update: {},
+      update: {
+        price: opts.price,
+        cost: opts.cost,
+        manufacturingCost: opts.manufacturingCost,
+        collectionId: opts.collectionId,
+      },
       create: {
         sku: opts.sku,
         name,
         size: opts.size,
         price: opts.price,
         cost: opts.cost,
+        manufacturingCost: opts.manufacturingCost,
         minStock: 1,
         collectionId: opts.collectionId,
       },
@@ -691,31 +717,25 @@ async function main() {
       if (product) await receiveAtStore(product.id, r.quantity, 40);
     }
 
-    // --- Modelo nuevo dentro de Herencia del Abuelo: Chocolate cierres ---
-    const chocolateCierres = sizeCounts("38,39,39,40,40,41,41,41,42,42,43,43,44");
-    for (const [size, qty] of Object.entries(chocolateCierres)) {
-      const sku = `WR-SAN-${slugify("Chocolate cierres")}-${size}`;
-      const product = await ensureProduct({
-        sku,
-        model: "Chocolate cierres",
-        size,
-        price: 80,
-        cost: 40,
-        collectionId: herenciaAbuelo.id,
-      });
-      await receiveAtStore(product.id, qty, 40);
+    // --- "Chocolate cierres" es el mismo modelo que "Marrón cierres" (Herencia del Abuelo) ---
+    const marronCierresStock = sizeCounts("38,39,39,40,40,41,41,41,42,42,43,43,44");
+    for (const [size, qty] of Object.entries(marronCierresStock)) {
+      const sku = `WR-SAN-${slugify("Marrón cierres")}-${size}`;
+      const product = sizedProducts.find((p) => p.sku === sku);
+      if (product) await receiveAtStore(product.id, qty, 40);
     }
 
-    // --- Nuevo color de riñonera: Chocolate ---
+    // --- Nuevo color de riñonera: Chocolate (colección nueva "Riñoneras") ---
     {
       const sku = `WR-RIN-${slugify("Riñonera Chocolate")}-UNICA`;
       const product = await ensureProduct({
         sku,
         model: "Riñonera Chocolate",
         size: "Única",
-        price: 80,
+        price: 75,
         cost: 40,
-        collectionId: velaUrbanRinoneras.id,
+        manufacturingCost: 25,
+        collectionId: newCollections.rinoneras.id,
       });
       await receiveAtStore(product.id, 2, 40);
     }
@@ -727,10 +747,11 @@ async function main() {
         model: "Náuticos Clásicos Multicolor",
         size: "Única",
         price: 60,
-        cost: 30,
+        cost: 40,
+        manufacturingCost: 25,
         collectionId: newCollections.nauticosClasicos.id,
       });
-      await receiveAtStore(product.id, 119, 30);
+      await receiveAtStore(product.id, 119, 40);
     }
 
     // --- Náuticos Kids (colección nueva) ---
@@ -741,10 +762,11 @@ async function main() {
         model: "Náuticos Kids Miel",
         size,
         price: 60,
-        cost: 30,
+        cost: 40,
+        manufacturingCost: 25,
         collectionId: newCollections.nauticosKids.id,
       });
-      await receiveAtStore(product.id, qty, 30);
+      await receiveAtStore(product.id, qty, 40);
     }
     const kidsChoco: Record<string, number> = {
       "26": 2,
@@ -761,10 +783,11 @@ async function main() {
         model: "Náuticos Kids Choco",
         size,
         price: 60,
-        cost: 30,
+        cost: 40,
+        manufacturingCost: 25,
         collectionId: newCollections.nauticosKids.id,
       });
-      await receiveAtStore(product.id, qty, 30);
+      await receiveAtStore(product.id, qty, 40);
     }
 
     // --- Driver's (colección nueva, Única) ---
@@ -775,6 +798,7 @@ async function main() {
         size: "Única",
         price: 60,
         cost: 30,
+        manufacturingCost: 25,
         collectionId: newCollections.drivers.id,
       });
       await receiveAtStore(product.id, 28, 30);
@@ -794,10 +818,11 @@ async function main() {
         model: w.model,
         size: "Única",
         price: 40,
-        cost: 20,
+        cost: 30,
+        manufacturingCost: 10,
         collectionId: newCollections.correasWatch.id,
       });
-      await receiveAtStore(product.id, w.quantity, 20);
+      await receiveAtStore(product.id, w.quantity, 30);
     }
 
     // --- Carteras Damas ---
@@ -811,10 +836,11 @@ async function main() {
         model: c.model,
         size: "Única",
         price: 140,
-        cost: 70,
+        cost: 90,
+        manufacturingCost: 70,
         collectionId: newCollections.carterasDamas.id,
       });
-      await receiveAtStore(product.id, c.quantity, 70);
+      await receiveAtStore(product.id, c.quantity, 90);
     }
 
     // --- Carriel ---
@@ -824,10 +850,11 @@ async function main() {
         model: "Carriel Choco",
         size: "Única",
         price: 140,
-        cost: 70,
+        cost: 90,
+        manufacturingCost: 50,
         collectionId: newCollections.carriel.id,
       });
-      await receiveAtStore(product.id, 1, 70);
+      await receiveAtStore(product.id, 1, 90);
     }
 
     // --- Correas DS ---
@@ -844,10 +871,11 @@ async function main() {
         model: c.model,
         size: "Única",
         price: 40,
-        cost: 20,
+        cost: 25,
+        manufacturingCost: 20,
         collectionId: newCollections.correasDS.id,
       });
-      await receiveAtStore(product.id, c.quantity, 20);
+      await receiveAtStore(product.id, c.quantity, 25);
     }
 
     // --- Correas de Caballero ---
@@ -860,11 +888,12 @@ async function main() {
         sku: `WR-CCB-${slugify(c.model)}-UNICA`,
         model: c.model,
         size: "Única",
-        price: 40,
-        cost: 20,
+        price: 30,
+        cost: 25,
+        manufacturingCost: 20,
         collectionId: newCollections.correasCaballero.id,
       });
-      await receiveAtStore(product.id, c.quantity, 20);
+      await receiveAtStore(product.id, c.quantity, 25);
     }
 
     // --- Deportivos Dress Sneakers, colección antigua ---
@@ -885,6 +914,7 @@ async function main() {
           size,
           price: 140,
           cost: 70,
+          manufacturingCost: 50,
           collectionId: newCollections.dressSneakersAntigua.id,
         });
         await receiveAtStore(product.id, qty, 70);

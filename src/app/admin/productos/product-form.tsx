@@ -4,6 +4,7 @@ import { useActionState, useRef, useEffect } from "react";
 import { createProduct, type FormState } from "./actions";
 
 const initialState: FormState = {};
+const NEW_COLLECTION_VALUE = "__new__";
 
 export default function ProductForm({
   collections,
@@ -37,6 +38,7 @@ export default function ProductForm({
       />
       <select
         name="collectionId"
+        defaultValue=""
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
       >
         <option value="">Sin colección</option>
@@ -45,7 +47,13 @@ export default function ProductForm({
             {c.name}
           </option>
         ))}
+        <option value={NEW_COLLECTION_VALUE}>+ Crear colección nueva...</option>
       </select>
+      <input
+        name="newCollectionName"
+        placeholder="Si elegiste &quot;+ Crear colección nueva...&quot;, escribe aquí el nombre"
+        className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
+      />
       <input
         name="price"
         type="number"
@@ -62,6 +70,14 @@ export default function ProductForm({
         step="1000"
         placeholder="Costo"
         required
+        className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
+      />
+      <input
+        name="manufacturingCost"
+        type="number"
+        min="0"
+        step="1000"
+        placeholder="Costo de fabricación"
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
       />
       <input

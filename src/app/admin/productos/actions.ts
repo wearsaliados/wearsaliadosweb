@@ -5,15 +5,19 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
+const NEW_COLLECTION_VALUE = "__new__";
+
 const productSchema = z.object({
   sku: z.string().min(2, "El SKU es obligatorio"),
   name: z.string().min(2, "El nombre es obligatorio"),
   description: z.string().optional(),
   price: z.coerce.number().min(0),
   cost: z.coerce.number().min(0),
+  manufacturingCost: z.coerce.number().min(0).optional(),
   minStock: z.coerce.number().int().min(0),
   imageUrl: z.string().optional(),
   collectionId: z.string().optional(),
+  newCollectionName: z.string().optional(),
 });
 
 export type FormState = { error?: string; success?: string };
@@ -29,6 +33,20 @@ export async function createProduct(
   }
   const data = parsed.data;
 
+  let collectionId = data.collectionId || null;
+  if (collectionId === NEW_COLLECTION_VALUE) {
+    const newName = data.newCollectionName?.trim();
+    if (!newName) {
+      return { error: "Escribe el nombre de la nueva colección" };
+    }
+    const collection = await prisma.collection.upsert({
+      where: { name: newName },
+      update: {},
+      create: { name: newName },
+    });
+    collectionId = collection.id;
+  }
+
   try {
     await prisma.product.create({
       data: {
@@ -37,9 +55,10 @@ export async function createProduct(
         description: data.description || null,
         price: data.price,
         cost: data.cost,
+        manufacturingCost: data.manufacturingCost ?? 0,
         minStock: data.minStock,
         imageUrl: data.imageUrl || null,
-        collectionId: data.collectionId || null,
+        collectionId,
       },
     });
   } catch {

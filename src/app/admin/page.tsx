@@ -5,6 +5,8 @@ import { formatUSD } from "@/lib/inventory";
 import StatCard from "@/components/stat-card";
 import BarList from "@/components/bar-list";
 import ProductSearch from "@/components/product-search";
+import ValueBreakdownStat from "@/components/value-breakdown-stat";
+import CollectionStockList from "@/components/collection-stock-list";
 
 export default async function AdminDashboardPage() {
   const [m, inventoryItems] = await Promise.all([
@@ -45,32 +47,95 @@ export default async function AdminDashboardPage() {
       </section>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard
+        <ValueBreakdownStat
           label="Total unidades"
           value={m.totalUnits.toString()}
-          hint={`${formatUSD(m.totalInventoryValue)} a costo`}
+          costValue={m.totalInventoryValue}
+          manufacturingValue={
+            m.inventoryManufacturingValueByLocationType.WEB +
+            m.inventoryManufacturingValueByLocationType.STORE +
+            m.inventoryManufacturingValueByLocationType.FACTORY +
+            m.inventoryManufacturingValueByLocationType.ALLY
+          }
+          saleValue={
+            m.inventorySaleValueByLocationType.WEB +
+            m.inventorySaleValueByLocationType.STORE +
+            m.inventorySaleValueByLocationType.FACTORY +
+            m.inventorySaleValueByLocationType.ALLY
+          }
         />
-        <StatCard
+        <ValueBreakdownStat
           label="En tienda en línea"
           value={m.inventoryByLocationType.WEB.toString()}
-          hint={`${formatUSD(m.inventoryValueByLocationType.WEB)} a costo`}
+          costValue={m.inventoryValueByLocationType.WEB}
+          manufacturingValue={m.inventoryManufacturingValueByLocationType.WEB}
+          saleValue={m.inventorySaleValueByLocationType.WEB}
         />
-        <StatCard
+        <ValueBreakdownStat
           label="En puntos físicos"
           value={m.inventoryByLocationType.STORE.toString()}
-          hint={`${formatUSD(m.inventoryValueByLocationType.STORE)} a costo`}
+          costValue={m.inventoryValueByLocationType.STORE}
+          manufacturingValue={m.inventoryManufacturingValueByLocationType.STORE}
+          saleValue={m.inventorySaleValueByLocationType.STORE}
         />
-        <StatCard
+        <ValueBreakdownStat
           label="En fábrica (reposición)"
           value={m.inventoryByLocationType.FACTORY.toString()}
-          hint={`${formatUSD(m.inventoryValueByLocationType.FACTORY)} a costo`}
+          costValue={m.inventoryValueByLocationType.FACTORY}
+          manufacturingValue={m.inventoryManufacturingValueByLocationType.FACTORY}
+          saleValue={m.inventorySaleValueByLocationType.FACTORY}
         />
-        <StatCard
+        <ValueBreakdownStat
           label="En aliados comerciales"
           value={m.inventoryByLocationType.ALLY.toString()}
-          hint={`${formatUSD(m.inventoryValueByLocationType.ALLY)} a costo`}
+          costValue={m.inventoryValueByLocationType.ALLY}
+          manufacturingValue={m.inventoryManufacturingValueByLocationType.ALLY}
+          saleValue={m.inventorySaleValueByLocationType.ALLY}
         />
       </div>
+
+      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
+        <h2 className="mb-1 font-semibold text-wears-black">Rentabilidad de Wears</h2>
+        <p className="mb-3 text-xs text-wears-espresso/50">
+          Ganancia real de Wears: en aliados se cuenta solo el margen (precio − costo); en
+          tienda web y punto físico se cuenta el valor completo de la venta.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {(
+            [
+              { key: "daily", label: "Hoy" },
+              { key: "monthly", label: "Este mes" },
+              { key: "annual", label: "Este año" },
+            ] as const
+          ).map((period) => {
+            const p = m.profitability[period.key];
+            return (
+              <div key={period.key} className="rounded-lg border border-wears-tan/20 p-4">
+                <p className="text-xs uppercase tracking-wide text-wears-espresso/60">
+                  {period.label}
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-emerald-600">
+                  {formatUSD(p.total)}
+                </p>
+                <dl className="mt-3 flex flex-col gap-1 text-xs text-wears-espresso/70">
+                  <div className="flex justify-between">
+                    <dt>Tienda web</dt>
+                    <dd className="font-medium text-wears-black">{formatUSD(p.web)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt>Puntos físicos</dt>
+                    <dd className="font-medium text-wears-black">{formatUSD(p.store)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt>Aliados comerciales</dt>
+                    <dd className="font-medium text-wears-black">{formatUSD(p.ally)}</dd>
+                  </div>
+                </dl>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -153,15 +218,10 @@ export default async function AdminDashboardPage() {
           <h2 className="mb-3 font-semibold text-wears-black">
             Existencias por colección
           </h2>
-          <BarList
-            items={m.collectionStock.map((c) => ({
-              name: c.name,
-              value: c.quantity,
-              hint: formatUSD(c.value) + " a costo",
-            }))}
-            colorClass="bg-wears-gold"
-            formatValue={(v) => `${v} und.`}
-          />
+          <p className="mb-3 text-xs text-wears-espresso/50">
+            Click en una colección para ver su valor a costo, fabricación y venta.
+          </p>
+          <CollectionStockList items={m.collectionStock} />
         </section>
         <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
           <h2 className="mb-3 font-semibold text-wears-black">

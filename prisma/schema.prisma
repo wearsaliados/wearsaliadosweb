@@ -130,6 +130,7 @@ model Product {
   imageUrl     String?
   price        Float
   cost         Float    @default(0)
+  manufacturingCost Float @default(0)
   minStock     Int      @default(2)
   active       Boolean  @default(true)
   collectionId String?
