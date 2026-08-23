@@ -133,20 +133,34 @@ export default function LoginBackground() {
 
   return (
     <>
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="wears-motion absolute inset-0 animate-[wears-kenburns_40s_ease-in-out_infinite_alternate]">
-          <div className="wears-motion absolute inset-0 animate-[wears-sail_9s_ease-in-out_infinite]">
-            <Image
-              src="/brand/barco-wears.jpg"
-              alt=""
-              fill
-              className="object-cover opacity-55"
-              sizes="100vw"
-              priority
-            />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden wears-sea-bg">
+        {/* Brillo de sol/luna reflejado sobre el mar */}
+        <div
+          className="wears-motion absolute left-1/2 top-[8%] h-64 w-64 -translate-x-1/2 rounded-full bg-wears-gold/40 blur-3xl animate-[wears-glow-pulse_7s_ease-in-out_infinite]"
+        />
+        {/* Destello horizontal como luz sobre el agua */}
+        <div className="absolute inset-x-0 top-[18%] h-24 overflow-hidden opacity-70">
+          <div className="wears-motion h-full w-full bg-gradient-to-r from-transparent via-white/25 to-transparent blur-2xl animate-[wears-shimmer_10s_ease-in-out_infinite]" />
+        </div>
+
+        {/* Foto de El Barco Wears, completa y centrada */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="wears-motion animate-[wears-kenburns_40s_ease-in-out_infinite_alternate]">
+            <div className="wears-motion animate-[wears-sail_9s_ease-in-out_infinite]">
+              <Image
+                src="/brand/barco-wears.jpg"
+                alt=""
+                width={896}
+                height={1195}
+                className="h-[78vh] max-h-[820px] w-auto object-contain opacity-90 drop-shadow-[0_30px_60px_rgba(0,0,0,0.5)]"
+                sizes="(max-width: 768px) 90vw, 700px"
+                priority
+              />
+            </div>
           </div>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-wears-black/55 via-wears-black/60 to-wears-black/80" />
+
+        <div className="absolute inset-0 bg-gradient-to-b from-wears-black/35 via-transparent to-wears-black/55" />
 
         {/* Olas animadas al pie de la pantalla */}
         <div className="absolute inset-x-0 bottom-0 h-40 overflow-hidden">
@@ -157,8 +171,8 @@ export default function LoginBackground() {
           >
             <path
               d="M0 100 C 200 40, 400 160, 600 100 S 1000 40, 1200 100 S 1600 160, 1800 100 S 2200 40, 2400 100 L2400 200 L0 200 Z"
-              fill="var(--wears-tan)"
-              fillOpacity="0.12"
+              fill="#0b2b4a"
+              fillOpacity="0.55"
             />
           </svg>
           <svg
@@ -168,7 +182,7 @@ export default function LoginBackground() {
           >
             <path
               d="M0 120 C 250 60, 450 170, 700 120 S 1100 60, 1350 120 S 1750 170, 2000 120 S 2350 60, 2400 120 L2400 200 L0 200 Z"
-              fill="var(--wears-gold)"
+              fill="#e8f4f6"
               fillOpacity="0.18"
             />
           </svg>

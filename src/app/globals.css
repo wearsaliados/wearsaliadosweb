@@ -77,6 +77,43 @@ body {
   }
 }
 
+@keyframes wears-shimmer {
+  0% {
+    transform: translateX(-15%);
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(15%);
+    opacity: 0.35;
+  }
+}
+
+@keyframes wears-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.08);
+  }
+}
+
+.wears-sea-bg {
+  background: linear-gradient(
+    to bottom,
+    #06152b 0%,
+    #0b2b4a 30%,
+    #124b66 55%,
+    #1c6f80 75%,
+    #2a8d92 100%
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wears-motion {
     animation: none !important;
