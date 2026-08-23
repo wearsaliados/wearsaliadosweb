@@ -243,7 +243,7 @@ async function main() {
     }),
     ...buildSizedModels({
       skuPrefix: "SAN",
-      models: ["Beige cierres", "Azul cierres", "Marrón cierres", "Correa negra", "Correa oro", "Correa caramelo"],
+      models: ["Beige cierres", "Azul cierres", "Marrón cierres", "Correa negra", "Correa oro", "Correa caramelo", "Correa vaqueta"],
       sizes: ["38", "39", "40", "41", "42", "43", "44"],
       price: 80,
       cost: 40,
@@ -471,7 +471,11 @@ async function main() {
 
       const detailed: { product: (typeof sizedProducts)[number]; quantity: number }[] = [
         ...bySkuPrefix("DEP").map((product) => ({ product, quantity: 1 })),
-        ...bySkuPrefix("SAN").map((product) => ({ product, quantity: 1 })),
+        // "Correa vaqueta" no formaba parte del inventario inicial de Sambil
+        // (solo llegó después, directo a fábrica) — se excluye aquí.
+        ...bySkuPrefix("SAN")
+          .filter((p) => !p.sku.includes("CORREA-VAQUETA"))
+          .map((product) => ({ product, quantity: 1 })),
         ...bySkuPrefix("NAU").map((product) => ({ product, quantity: 1 })),
         ...bySkuPrefix("RIN").map((product) => ({ product, quantity: 2 })),
       ];
@@ -501,6 +505,71 @@ async function main() {
         `Inventario de Sambil migrado a detalle por modelo y talla: ${detailed.length} variantes, ${totalUnits} unidades.`
       );
     }
+  }
+
+  // Carga del inventario real de fábrica (una sola vez), por modelo y talla exacta.
+  function sizeCounts(sizesCsv: string): Record<string, number> {
+    const counts: Record<string, number> = {};
+    for (const raw of sizesCsv.split(",")) {
+      const s = raw.trim();
+      counts[s] = (counts[s] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  const factoryStockDefs: { skuPrefix: string; model: string; sizesCsv: string }[] = [
+    { skuPrefix: "DEP", model: "Dallas real", sizesCsv: "39,40,41,41,42,42,42,42,43,43,43,43" },
+    { skuPrefix: "DEP", model: "Gitano verde", sizesCsv: "39,40,40,41,41,42,42,42,43,43,43,43,43,43,44,45" },
+    { skuPrefix: "DEP", model: "Espartano azul", sizesCsv: "41,42,42,42,43,43" },
+    { skuPrefix: "DEP", model: "Espartano negro", sizesCsv: "42,42,42,43,43,43" },
+    { skuPrefix: "DEP", model: "Hanton miel", sizesCsv: "39,39,41,41,42,42,43,43" },
+    { skuPrefix: "SAN", model: "Beige cierres", sizesCsv: "38,39,39,39,39,39,39,39,39,40,40,40,40,40,40,40,41,41,41,43" },
+    { skuPrefix: "SAN", model: "Azul cierres", sizesCsv: "39,39,39,39,39,39,39,40,40,41,41" },
+    { skuPrefix: "SAN", model: "Marrón cierres", sizesCsv: "38,39,39,39,39,39,40,40,40,40,41,41,41,41,42,42,42" },
+    { skuPrefix: "SAN", model: "Correa negra", sizesCsv: "38,39,39,39,40,40,41,41,41,42,42,43,43" },
+    { skuPrefix: "SAN", model: "Correa oro", sizesCsv: "38,39,39,39,40,40,41,41,41,42,42,42,43,43,44,44" },
+    { skuPrefix: "SAN", model: "Correa vaqueta", sizesCsv: "39,39,39,40,40,41,41,41,42,42,42,43,43,44,44" },
+    { skuPrefix: "NAU", model: "Náuticos Caramelo", sizesCsv: "38,39,40,40,40,41,41,41,42,42,42,43,43,43,44,44,44" },
+    { skuPrefix: "NAU", model: "Náuticos Azul", sizesCsv: "38,39,40,40,40,41,41,41,42,42,42,43,43,43,44,44,44" },
+    { skuPrefix: "NAU", model: "Náuticos Rojo", sizesCsv: "38,39,40,40,40,41,41,41,42,42,42,43,43,43,44,44,44" },
+    { skuPrefix: "NAU", model: "Náuticos Verde", sizesCsv: "38,39,40,40,40,41,41,41,42,42,42,43,43,43,44,44,44" },
+  ];
+
+  const factoryMarkerSku = `WR-DEP-${slugify("Dallas real")}-39`;
+  const factoryAlreadyLoaded = await prisma.inventoryItem.findFirst({
+    where: { locationId: factory.id, product: { sku: factoryMarkerSku }, quantity: { gt: 0 } },
+  });
+
+  if (!factoryAlreadyLoaded) {
+    let factoryVariants = 0;
+    let factoryUnits = 0;
+    for (const def of factoryStockDefs) {
+      const counts = sizeCounts(def.sizesCsv);
+      for (const [size, quantity] of Object.entries(counts)) {
+        const sku = `WR-${def.skuPrefix}-${slugify(def.model)}-${size}`;
+        const product = sizedProducts.find((p) => p.sku === sku);
+        if (!product) continue;
+
+        const item = await prisma.inventoryItem.upsert({
+          where: { productId_locationId: { productId: product.id, locationId: factory.id } },
+          update: { quantity: { increment: quantity } },
+          create: { productId: product.id, locationId: factory.id, quantity, unitCost: product.cost },
+        });
+        await prisma.inventoryMovement.create({
+          data: {
+            inventoryItemId: item.id,
+            type: "RECEIVE",
+            quantityDelta: quantity,
+            note: "Inventario real de fábrica para reposición",
+          },
+        });
+        factoryVariants += 1;
+        factoryUnits += quantity;
+      }
+    }
+    console.log(
+      `Inventario de fábrica cargado: ${factoryVariants} variantes, ${factoryUnits} unidades.`
+    );
   }
 
   console.log("Seed completado.");

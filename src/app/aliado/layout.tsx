@@ -70,7 +70,17 @@ export default async function AllyLayout({
             </div>
           </div>
         </aside>
-        <main className="flex-1 p-4 sm:p-8">{children}</main>
+        <div className="pointer-events-none fixed inset-y-0 right-0 z-0 hidden w-48 lg:block xl:w-64">
+          <Image
+            src="/brand/barco-wears.jpg"
+            alt=""
+            fill
+            className="object-cover opacity-10"
+            sizes="256px"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-wears-cream via-wears-cream/40 to-transparent" />
+        </div>
+        <main className="relative z-10 flex-1 p-4 sm:p-8">{children}</main>
       </div>
     </div>
   );
