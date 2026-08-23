@@ -572,6 +572,328 @@ async function main() {
     );
   }
 
+  // ============================================================
+  // Inventario real de la tienda física principal + colecciones nuevas
+  // ============================================================
+  const newCollectionDefs: { key: string; name: string }[] = [
+    { key: "nauticosClasicos", name: "Náuticos Clásicos" },
+    { key: "nauticosKids", name: "Náuticos Kids" },
+    { key: "drivers", name: "Driver's" },
+    { key: "correasWatch", name: "Correas Apple Watch" },
+    { key: "carterasDamas", name: "Carteras Damas" },
+    { key: "carriel", name: "Carriel" },
+    { key: "correasDS", name: "Correas DS" },
+    { key: "correasCaballero", name: "Correas de Caballero" },
+    { key: "dressSneakersAntigua", name: "Deportivos Dress Sneakers (colección antigua)" },
+  ];
+  const newCollections: Record<string, { id: string }> = {};
+  for (const def of newCollectionDefs) {
+    newCollections[def.key] = await prisma.collection.upsert({
+      where: { name: def.name },
+      update: {},
+      create: { name: def.name },
+    });
+  }
+
+  async function ensureProduct(opts: {
+    sku: string;
+    model: string;
+    size: string | null;
+    price: number;
+    cost: number;
+    collectionId: string;
+  }) {
+    const name = opts.size && opts.size !== "Única" ? `${opts.model} — Talla ${opts.size}` : opts.model;
+    return prisma.product.upsert({
+      where: { sku: opts.sku },
+      update: {},
+      create: {
+        sku: opts.sku,
+        name,
+        size: opts.size,
+        price: opts.price,
+        cost: opts.cost,
+        minStock: 1,
+        collectionId: opts.collectionId,
+      },
+    });
+  }
+
+  const STORE_NOTE = "Inventario real de tienda física principal";
+
+  async function receiveAtStore(productId: string, quantity: number, cost: number) {
+    if (quantity <= 0) return;
+    const item = await prisma.inventoryItem.upsert({
+      where: { productId_locationId: { productId, locationId: store.id } },
+      update: { quantity: { increment: quantity } },
+      create: { productId, locationId: store.id, quantity, unitCost: cost },
+    });
+    await prisma.inventoryMovement.create({
+      data: {
+        inventoryItemId: item.id,
+        type: "RECEIVE",
+        quantityDelta: quantity,
+        note: STORE_NOTE,
+      },
+    });
+  }
+
+  function toStoreEntries(skuPrefix: string, model: string, sizesCsv: string, cost: number) {
+    const counts = sizeCounts(sizesCsv);
+    return Object.entries(counts).map(([size, quantity]) => ({
+      sku: `${skuPrefix}-${slugify(model)}-${size}`,
+      quantity,
+      cost,
+    }));
+  }
+
+  const storeMarkerSku = `WR-DEP-${slugify("Espartano negro")}-41`;
+  const storeAlreadyLoaded = await prisma.inventoryItem.findFirst({
+    where: { locationId: store.id, product: { sku: storeMarkerSku }, quantity: { gt: 0 } },
+  });
+
+  if (!storeAlreadyLoaded) {
+    // --- Modelos existentes: sumar el stock real de tienda a sus productos ya creados ---
+    const existingStoreStock: { sku: string; quantity: number; cost: number }[] = [
+      // Deportivos Dress Sneakers (costo 70)
+      ...toStoreEntries("WR-DEP", "Espartano negro", "41,43,43,43,44,44", 70),
+      ...toStoreEntries("WR-DEP", "Espartano azul", "40,40,41,42,43,44,44,45", 70),
+      ...toStoreEntries("WR-DEP", "Gitano verde", "39,39,40,41,42,43,44", 70),
+      ...toStoreEntries("WR-DEP", "Hanton miel", "39,40,41,42,43,45", 70),
+      ...toStoreEntries("WR-DEP", "Dallas real", "39,39,40,41,42,42,42,42,43,44,45", 70),
+      // Náuticos Vela Urban (costo 40)
+      ...toStoreEntries("WR-NAU", "Náuticos Azul", "38,39,40,41,41", 40),
+      ...toStoreEntries("WR-NAU", "Náuticos Rojo", "38,39,40,40,41,41,41", 40),
+      ...toStoreEntries("WR-NAU", "Náuticos Caramelo", "38,39,40,40,40,41,41,41", 40),
+      ...toStoreEntries("WR-NAU", "Náuticos Verde", "38,39,40,40,41,41,41,42,42,42,43", 40),
+      // Herencia del Abuelo (costo 40)
+      ...toStoreEntries("WR-SAN", "Correa negra", "39,39,39,39,40,40,41,41,42,42,43,43", 40),
+      ...toStoreEntries("WR-SAN", "Correa oro", "38,39,39,40,40,40,41,41,41,42,43,43,44", 40),
+      ...toStoreEntries("WR-SAN", "Correa vaqueta", "38,39,40,40,42,42,43,44", 40),
+      ...toStoreEntries("WR-SAN", "Beige cierres", "38,38,39,40,41,42,42,43", 40),
+      ...toStoreEntries("WR-SAN", "Azul cierres", "38,39,39,40,40,41,41,42,43,43,44,44", 40),
+    ];
+    for (const entry of existingStoreStock) {
+      const product = sizedProducts.find((p) => p.sku === entry.sku);
+      if (product) await receiveAtStore(product.id, entry.quantity, entry.cost);
+    }
+
+    // Riñoneras Vela Urban (Única, costo 40) — ya existen como productos
+    const rinStore: { model: string; quantity: number }[] = [
+      { model: "Riñonera Caramelo", quantity: 5 },
+      { model: "Riñonera Verde", quantity: 6 },
+      { model: "Riñonera Azul", quantity: 7 },
+      { model: "Riñonera Rojo", quantity: 9 },
+    ];
+    for (const r of rinStore) {
+      const sku = `WR-RIN-${slugify(r.model)}-Única`;
+      const product = sizedProducts.find((p) => p.sku === sku);
+      if (product) await receiveAtStore(product.id, r.quantity, 40);
+    }
+
+    // --- Modelo nuevo dentro de Herencia del Abuelo: Chocolate cierres ---
+    const chocolateCierres = sizeCounts("38,39,39,40,40,41,41,41,42,42,43,43,44");
+    for (const [size, qty] of Object.entries(chocolateCierres)) {
+      const sku = `WR-SAN-${slugify("Chocolate cierres")}-${size}`;
+      const product = await ensureProduct({
+        sku,
+        model: "Chocolate cierres",
+        size,
+        price: 80,
+        cost: 40,
+        collectionId: herenciaAbuelo.id,
+      });
+      await receiveAtStore(product.id, qty, 40);
+    }
+
+    // --- Nuevo color de riñonera: Chocolate ---
+    {
+      const sku = `WR-RIN-${slugify("Riñonera Chocolate")}-UNICA`;
+      const product = await ensureProduct({
+        sku,
+        model: "Riñonera Chocolate",
+        size: "Única",
+        price: 80,
+        cost: 40,
+        collectionId: velaUrbanRinoneras.id,
+      });
+      await receiveAtStore(product.id, 2, 40);
+    }
+
+    // --- Náuticos Clásicos (colección nueva, un solo modelo, Única) ---
+    {
+      const product = await ensureProduct({
+        sku: "WR-NAC-MULTICOLOR-UNICA",
+        model: "Náuticos Clásicos Multicolor",
+        size: "Única",
+        price: 60,
+        cost: 30,
+        collectionId: newCollections.nauticosClasicos.id,
+      });
+      await receiveAtStore(product.id, 119, 30);
+    }
+
+    // --- Náuticos Kids (colección nueva) ---
+    const kidsMiel = sizeCounts("26,32,33");
+    for (const [size, qty] of Object.entries(kidsMiel)) {
+      const product = await ensureProduct({
+        sku: `WR-NKI-MIEL-${size}`,
+        model: "Náuticos Kids Miel",
+        size,
+        price: 60,
+        cost: 30,
+        collectionId: newCollections.nauticosKids.id,
+      });
+      await receiveAtStore(product.id, qty, 30);
+    }
+    const kidsChoco: Record<string, number> = {
+      "26": 2,
+      "27": 3,
+      "28": 3,
+      "29": 1,
+      "31": 2,
+      "32": 2,
+      "33": 3,
+    };
+    for (const [size, qty] of Object.entries(kidsChoco)) {
+      const product = await ensureProduct({
+        sku: `WR-NKI-CHOCO-${size}`,
+        model: "Náuticos Kids Choco",
+        size,
+        price: 60,
+        cost: 30,
+        collectionId: newCollections.nauticosKids.id,
+      });
+      await receiveAtStore(product.id, qty, 30);
+    }
+
+    // --- Driver's (colección nueva, Única) ---
+    {
+      const product = await ensureProduct({
+        sku: "WR-DRV-DRIVERS-UNICA",
+        model: "Driver's",
+        size: "Única",
+        price: 60,
+        cost: 30,
+        collectionId: newCollections.drivers.id,
+      });
+      await receiveAtStore(product.id, 28, 30);
+    }
+
+    // --- Correas Apple Watch (colección nueva, Única por color) ---
+    const watchColors: { model: string; quantity: number }[] = [
+      { model: "Correa Apple Watch Miel", quantity: 2 },
+      { model: "Correa Apple Watch Verde", quantity: 2 },
+      { model: "Correa Apple Watch Vinotinto", quantity: 5 },
+      { model: "Correa Apple Watch Azul", quantity: 3 },
+      { model: "Correa Apple Watch Negro", quantity: 4 },
+    ];
+    for (const w of watchColors) {
+      const product = await ensureProduct({
+        sku: `WR-CAW-${slugify(w.model)}-UNICA`,
+        model: w.model,
+        size: "Única",
+        price: 40,
+        cost: 20,
+        collectionId: newCollections.correasWatch.id,
+      });
+      await receiveAtStore(product.id, w.quantity, 20);
+    }
+
+    // --- Carteras Damas ---
+    const carteras: { model: string; quantity: number }[] = [
+      { model: "Cartera Roja", quantity: 1 },
+      { model: "Cartera Amarilla", quantity: 1 },
+    ];
+    for (const c of carteras) {
+      const product = await ensureProduct({
+        sku: `WR-CAR-${slugify(c.model)}-UNICA`,
+        model: c.model,
+        size: "Única",
+        price: 140,
+        cost: 70,
+        collectionId: newCollections.carterasDamas.id,
+      });
+      await receiveAtStore(product.id, c.quantity, 70);
+    }
+
+    // --- Carriel ---
+    {
+      const product = await ensureProduct({
+        sku: "WR-CRL-CARRIEL-CHOCO-UNICA",
+        model: "Carriel Choco",
+        size: "Única",
+        price: 140,
+        cost: 70,
+        collectionId: newCollections.carriel.id,
+      });
+      await receiveAtStore(product.id, 1, 70);
+    }
+
+    // --- Correas DS ---
+    const correasDSModels: { model: string; quantity: number }[] = [
+      { model: "Correa DS Negra espartano", quantity: 8 },
+      { model: "Correa DS Verde gitano", quantity: 8 },
+      { model: "Correa DS Azul espartano", quantity: 5 },
+      { model: "Correa DS Dallas real", quantity: 7 },
+      { model: "Correa DS Hanton miel", quantity: 5 },
+    ];
+    for (const c of correasDSModels) {
+      const product = await ensureProduct({
+        sku: `WR-CDS-${slugify(c.model)}-UNICA`,
+        model: c.model,
+        size: "Única",
+        price: 40,
+        cost: 20,
+        collectionId: newCollections.correasDS.id,
+      });
+      await receiveAtStore(product.id, c.quantity, 20);
+    }
+
+    // --- Correas de Caballero ---
+    const correasCaballeroModels: { model: string; quantity: number }[] = [
+      { model: "Correa Caballero Azul", quantity: 7 },
+      { model: "Correa Caballero Miel", quantity: 5 },
+    ];
+    for (const c of correasCaballeroModels) {
+      const product = await ensureProduct({
+        sku: `WR-CCB-${slugify(c.model)}-UNICA`,
+        model: c.model,
+        size: "Única",
+        price: 40,
+        cost: 20,
+        collectionId: newCollections.correasCaballero.id,
+      });
+      await receiveAtStore(product.id, c.quantity, 20);
+    }
+
+    // --- Deportivos Dress Sneakers, colección antigua ---
+    const antiguaDefs: { model: string; sizesCsv: string }[] = [
+      { model: "Sakini verde", sizesCsv: "44,44" },
+      { model: "Dember Azul", sizesCsv: "43,44" },
+      { model: "Romansi Oro", sizesCsv: "44" },
+      { model: "Romansi Rojo", sizesCsv: "44" },
+      { model: "Nobuck café beige", sizesCsv: "43" },
+      { model: "Black", sizesCsv: "43" },
+    ];
+    for (const def of antiguaDefs) {
+      const counts = sizeCounts(def.sizesCsv);
+      for (const [size, qty] of Object.entries(counts)) {
+        const product = await ensureProduct({
+          sku: `WR-DEA-${slugify(def.model)}-${size}`,
+          model: def.model,
+          size,
+          price: 140,
+          cost: 70,
+          collectionId: newCollections.dressSneakersAntigua.id,
+        });
+        await receiveAtStore(product.id, qty, 70);
+      }
+    }
+
+    console.log("Inventario real de tienda física principal cargado, junto con las colecciones nuevas.");
+  }
+
   console.log("Seed completado.");
 }
 
