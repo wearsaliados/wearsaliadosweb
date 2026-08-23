@@ -5,97 +5,102 @@ import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
 /**
- * Ambiente de puerto: ruido marrón filtrado (olas) + un bocinazo grave y
- * lejano de barco, sintetizados con Web Audio API — sin archivos de audio.
- * Los navegadores bloquean el audio con sonido hasta el primer gesto del
- * usuario, así que se intenta de una vez y además se arma un listener que
- * lo retoma en el primer click/tecla si el navegador lo bloqueó.
+ * Sonido de olas de mar, sintetizado con Web Audio API — sin archivos de
+ * audio. Dos capas: un fondo continuo de ruido marrón (la "respiración"
+ * constante del mar) y ciclos de olas que se levantan, rompen y se
+ * retiran sobre la arena, con tiempos ligeramente aleatorios entre cada
+ * una para que no suene mecánico ni repetitivo.
+ * Los navegadores bloquean el audio hasta el primer gesto del usuario,
+ * por eso arranca solo cuando se hace click en el botón de sonido.
  */
 function startPortAmbience(ctx: AudioContext) {
   const master = ctx.createGain();
-  master.gain.value = 0.16;
+  master.gain.value = 0.22;
   master.connect(ctx.destination);
 
-  // Olas: ruido marrón (integración de ruido blanco) pasado por un filtro
-  // paso-bajo, con un LFO lento que hace "respirar" el volumen como el
-  // vaivén de las olas contra el muelle.
   const bufferSize = 2 * ctx.sampleRate;
-  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = noiseBuffer.getChannelData(0);
+
+  // Fondo continuo: ruido marrón (integración de ruido blanco) filtrado
+  // en paso-bajo, el murmullo constante del mar de fondo.
+  const bedBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const bedData = bedBuffer.getChannelData(0);
   let lastOut = 0;
   for (let i = 0; i < bufferSize; i++) {
     const white = Math.random() * 2 - 1;
-    data[i] = (lastOut + 0.02 * white) / 1.02;
-    lastOut = data[i];
-    data[i] *= 3.2;
+    bedData[i] = (lastOut + 0.02 * white) / 1.02;
+    lastOut = bedData[i];
+    bedData[i] *= 3.2;
   }
-  const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer;
-  noise.loop = true;
+  const bedNoise = ctx.createBufferSource();
+  bedNoise.buffer = bedBuffer;
+  bedNoise.loop = true;
 
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = 650;
+  const bedFilter = ctx.createBiquadFilter();
+  bedFilter.type = "lowpass";
+  bedFilter.frequency.value = 400;
 
-  const waveGain = ctx.createGain();
-  waveGain.gain.value = 0.5;
+  const bedGain = ctx.createGain();
+  bedGain.gain.value = 0.3;
 
-  const swell = ctx.createOscillator();
-  swell.frequency.value = 0.09;
-  const swellDepth = ctx.createGain();
-  swellDepth.gain.value = 0.25;
-  swell.connect(swellDepth);
-  swellDepth.connect(waveGain.gain);
+  bedNoise.connect(bedFilter);
+  bedFilter.connect(bedGain);
+  bedGain.connect(master);
+  bedNoise.start();
 
-  noise.connect(filter);
-  filter.connect(waveGain);
-  waveGain.connect(master);
+  // Olas que rompen: ruido blanco por un filtro pasabanda cuya frecuencia
+  // y volumen suben (la ola se levanta), llegan a un pico (rompe) y bajan
+  // (la espuma se retira). Se reprograma cada vez con duración distinta.
+  const surfBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const surfData = surfBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) surfData[i] = Math.random() * 2 - 1;
+  const surfNoise = ctx.createBufferSource();
+  surfNoise.buffer = surfBuffer;
+  surfNoise.loop = true;
 
-  noise.start();
-  swell.start();
+  const surfFilter = ctx.createBiquadFilter();
+  surfFilter.type = "bandpass";
+  surfFilter.Q.value = 0.6;
+  surfFilter.frequency.value = 400;
 
-  // Bocina de barco llegando a puerto: tono grave con ataque y caída
-  // suaves, con un leve vibrato para que no suene a tono puro sintético.
-  const hornGain = ctx.createGain();
-  hornGain.gain.value = 0;
-  hornGain.connect(master);
+  const surfGain = ctx.createGain();
+  surfGain.gain.value = 0.02;
 
-  const horn = ctx.createOscillator();
-  horn.type = "sawtooth";
-  horn.frequency.value = 98;
+  surfNoise.connect(surfFilter);
+  surfFilter.connect(surfGain);
+  surfGain.connect(master);
+  surfNoise.start();
 
-  const hornFilter = ctx.createBiquadFilter();
-  hornFilter.type = "lowpass";
-  hornFilter.frequency.value = 320;
+  let waveTimer: ReturnType<typeof setTimeout>;
+  function scheduleWave() {
+    const buildTime = 1.8 + Math.random() * 1.3;
+    const breakTime = 0.35 + Math.random() * 0.3;
+    const recedeTime = 2.3 + Math.random() * 1.6;
+    const t0 = ctx.currentTime + 0.05;
+    const tBreak = t0 + buildTime;
+    const tCrest = tBreak + breakTime;
+    const tEnd = tCrest + recedeTime;
 
-  const vibrato = ctx.createOscillator();
-  vibrato.frequency.value = 4.5;
-  const vibratoDepth = ctx.createGain();
-  vibratoDepth.gain.value = 2.5;
-  vibrato.connect(vibratoDepth);
-  vibratoDepth.connect(horn.frequency);
+    surfGain.gain.cancelScheduledValues(t0);
+    surfFilter.frequency.cancelScheduledValues(t0);
+    surfGain.gain.setValueAtTime(0.02, t0);
+    surfGain.gain.linearRampToValueAtTime(0.42, tBreak);
+    surfGain.gain.linearRampToValueAtTime(0.58, tCrest);
+    surfGain.gain.exponentialRampToValueAtTime(0.015, tEnd);
 
-  horn.connect(hornFilter);
-  hornFilter.connect(hornGain);
-  horn.start();
-  vibrato.start();
+    surfFilter.frequency.setValueAtTime(350, t0);
+    surfFilter.frequency.linearRampToValueAtTime(1400, tBreak);
+    surfFilter.frequency.linearRampToValueAtTime(2200, tCrest);
+    surfFilter.frequency.exponentialRampToValueAtTime(300, tEnd);
 
-  function playHorn(delaySeconds: number) {
-    const t = ctx.currentTime + delaySeconds;
-    hornGain.gain.setValueAtTime(0, t);
-    hornGain.gain.linearRampToValueAtTime(0.22, t + 0.6);
-    hornGain.gain.linearRampToValueAtTime(0.16, t + 1.6);
-    hornGain.gain.linearRampToValueAtTime(0, t + 2.6);
+    const totalMs = (tEnd - t0) * 1000;
+    waveTimer = setTimeout(scheduleWave, totalMs * (0.75 + Math.random() * 0.3));
   }
-  playHorn(1.2);
-  const hornInterval = setInterval(() => playHorn(0), 26000);
+  scheduleWave();
 
   return () => {
-    clearInterval(hornInterval);
-    noise.stop();
-    swell.stop();
-    horn.stop();
-    vibrato.stop();
+    clearTimeout(waveTimer);
+    bedNoise.stop();
+    surfNoise.stop();
     master.disconnect();
   };
 }
@@ -188,7 +193,7 @@ export default function LoginBackground() {
         className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full border border-wears-tan/30 bg-wears-black/60 px-3 py-1.5 text-xs text-wears-sand/80 backdrop-blur-sm transition hover:border-wears-gold hover:text-wears-gold"
       >
         {soundOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5" />}
-        {soundOn ? "Sonido del puerto" : "Activar sonido"}
+        {soundOn ? "Sonido del mar" : "Activar sonido"}
       </button>
     </>
   );
