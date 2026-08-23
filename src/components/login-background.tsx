@@ -134,19 +134,19 @@ export default function LoginBackground() {
   return (
     <>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div
-          className="wears-motion absolute inset-0 animate-[wears-kenburns_32s_ease-in-out_infinite_alternate]"
-        >
-          <Image
-            src="/brand/barco-wears.jpg"
-            alt=""
-            fill
-            className="object-cover opacity-[0.16]"
-            sizes="100vw"
-            priority
-          />
+        <div className="wears-motion absolute inset-0 animate-[wears-kenburns_40s_ease-in-out_infinite_alternate]">
+          <div className="wears-motion absolute inset-0 animate-[wears-sail_9s_ease-in-out_infinite]">
+            <Image
+              src="/brand/barco-wears.jpg"
+              alt=""
+              fill
+              className="object-cover opacity-55"
+              sizes="100vw"
+              priority
+            />
+          </div>
         </div>
-        <div className="absolute inset-0 bg-wears-black/85" />
+        <div className="absolute inset-0 bg-gradient-to-b from-wears-black/55 via-wears-black/60 to-wears-black/80" />
 
         {/* Olas animadas al pie de la pantalla */}
         <div className="absolute inset-x-0 bottom-0 h-40 overflow-hidden">
