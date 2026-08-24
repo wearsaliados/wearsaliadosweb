@@ -430,61 +430,6 @@ async function main() {
     return { ally, isNew: true };
   }
 
-  const { ally: ally1, isNew: ally1IsNew } = await ensureAlly({
-    email: "aliado1@cueroswears.com",
-    password: "Aliado2026!",
-    businessName: "Boutique El Puerto",
-    contactName: "María Gómez",
-    phone: "3001234567",
-    city: "Cartagena",
-  });
-  const { ally: ally2, isNew: ally2IsNew } = await ensureAlly({
-    email: "aliado2@cueroswears.com",
-    password: "Aliado2026!",
-    businessName: "Estilo Urbano Store",
-    contactName: "Carlos Pérez",
-    phone: "3007654321",
-    city: "Bogotá",
-  });
-
-  if (ally1IsNew) {
-    const loc1 = await prisma.location.findUniqueOrThrow({ where: { allyId: ally1.id } });
-    for (const [i, p] of [deportivos, sandaliasHDA, nauticos].entries()) {
-      await prisma.inventoryItem.create({
-        data: {
-          productId: p.id,
-          locationId: loc1.id,
-          quantity: i === 0 ? 1 : 4,
-          acquisitionType: "PURCHASE",
-          unitCost: p.cost,
-        },
-      });
-    }
-  }
-
-  if (ally2IsNew) {
-    const loc2 = await prisma.location.findUniqueOrThrow({ where: { allyId: ally2.id } });
-    for (const p of [sandaliasHDA, nauticos]) {
-      await prisma.inventoryItem.create({
-        data: {
-          productId: p.id,
-          locationId: loc2.id,
-          quantity: 3,
-          acquisitionType: "CONSIGNMENT",
-          unitCost: p.cost,
-        },
-      });
-      await prisma.ledgerEntry.create({
-        data: {
-          allyId: ally2.id,
-          type: "CONSIGNMENT_CHARGE",
-          amount: p.cost * 3,
-          description: `Mercancía a consignación: ${p.name} x3`,
-        },
-      });
-    }
-  }
-
   // Primer aliado comercial oficial: Make Waves C.C. Sambil Chacao
   const { ally: sambil, isNew: sambilIsNew } = await ensureAlly({
     email: "makewakesccsambil",
