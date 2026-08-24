@@ -158,6 +158,31 @@ async function main() {
         "Calzado de dama, 3 colores. Pídelos con antelación — pedido mínimo 15 pares (una unidad de cada color y talla).",
     },
   });
+  const c4bos = await prisma.collection.upsert({
+    where: { name: "C4bos" },
+    update: {},
+    create: { name: "C4bos" },
+  });
+  const feline = await prisma.collection.upsert({
+    where: { name: "Feline" },
+    update: {},
+    create: { name: "Feline" },
+  });
+  const correasC4bos = await prisma.collection.upsert({
+    where: { name: "Correas C4bos" },
+    update: {},
+    create: { name: "Correas C4bos" },
+  });
+  const correasMJane = await prisma.collection.upsert({
+    where: { name: "Correas M Jane" },
+    update: {},
+    create: { name: "Correas M Jane" },
+  });
+  const correasFeline = await prisma.collection.upsert({
+    where: { name: "Correas Feline" },
+    update: {},
+    create: { name: "Correas Feline" },
+  });
 
   // Catálogo "genérico" anterior (un producto por colección, sin talla). Se deja inactivo:
   // ya no se usa para asignar inventario nuevo, pero se conserva por el historial de ventas
@@ -276,16 +301,75 @@ async function main() {
       minStock: 1,
       collectionId: velaUrbanRinoneras.id,
     }),
-    // M Jane: próxima colección, catálogo de referencia para pedido anticipado (aún sin inventario)
+    // M Jane: calzado de dama, 3 colores
     ...buildSizedModels({
       skuPrefix: "MJ",
       models: ["M Jane Rojo", "M Jane Blanco", "M Jane Verde"],
       sizes: ["35", "36", "37", "38", "39"],
       price: 90,
-      cost: 60,
-      manufacturingCost: 35,
+      cost: 55,
+      manufacturingCost: 30,
       minStock: 1,
       collectionId: mJane.id,
+    }),
+    // C4bos: calzado de dama, 2 colores
+    ...buildSizedModels({
+      skuPrefix: "C4B",
+      models: ["Miel crema", "Beige arena"],
+      sizes: ["35", "36", "37", "38", "39"],
+      price: 100,
+      cost: 60,
+      manufacturingCost: 40,
+      minStock: 1,
+      collectionId: c4bos.id,
+    }),
+    // Feline: calzado de dama print animal, 3 colores
+    ...buildSizedModels({
+      skuPrefix: "FEL",
+      models: ["Pelo print chita negro", "Pelo print leopardo", "Borgoña"],
+      sizes: ["35", "36", "37", "38", "39"],
+      price: 100,
+      cost: 60,
+      manufacturingCost: 40,
+      minStock: 1,
+      collectionId: feline.id,
+    }),
+    // Correas C4bos: mismos colores, tallas M/L/XL/XXL
+    ...buildSizedModels({
+      skuPrefix: "CC4",
+      models: ["Correa C4bos Miel crema", "Correa C4bos Beige arena"],
+      sizes: ["M", "L", "XL", "XXL"],
+      price: 40,
+      cost: 30,
+      manufacturingCost: 20,
+      minStock: 1,
+      collectionId: correasC4bos.id,
+    }),
+    // Correas M Jane: mismos colores, tallas M/L/XL/XXL
+    ...buildSizedModels({
+      skuPrefix: "CMJ",
+      models: ["Correa M Jane Verde", "Correa M Jane Rojo", "Correa M Jane Blanco"],
+      sizes: ["M", "L", "XL", "XXL"],
+      price: 40,
+      cost: 30,
+      manufacturingCost: 20,
+      minStock: 1,
+      collectionId: correasMJane.id,
+    }),
+    // Correas Feline: mismos colores, tallas M/L/XL/XXL
+    ...buildSizedModels({
+      skuPrefix: "CFE",
+      models: [
+        "Correa Feline Pelo print chita negro",
+        "Correa Feline Pelo print leopardo",
+        "Correa Feline Borgoña",
+      ],
+      sizes: ["M", "L", "XL", "XXL"],
+      price: 40,
+      cost: 30,
+      manufacturingCost: 20,
+      minStock: 1,
+      collectionId: correasFeline.id,
     }),
   ];
 
@@ -535,7 +619,12 @@ async function main() {
     return counts;
   }
 
-  const factoryStockDefs: { skuPrefix: string; model: string; sizesCsv: string }[] = [
+  const factoryStockDefs: {
+    skuPrefix: string;
+    model: string;
+    sizesCsv?: string;
+    counts?: Record<string, number>;
+  }[] = [
     { skuPrefix: "DEP", model: "Dallas real", sizesCsv: "39,40,41,41,42,42,42,42,43,43,43,43" },
     { skuPrefix: "DEP", model: "Gitano verde", sizesCsv: "39,40,40,41,41,42,42,42,43,43,43,43,43,43,44,45" },
     { skuPrefix: "DEP", model: "Espartano azul", sizesCsv: "41,42,42,42,43,43" },
@@ -551,6 +640,39 @@ async function main() {
     { skuPrefix: "NAU", model: "Náuticos Azul", sizesCsv: "38,39,40,40,40,41,41,41,42,42,42,43,43,43,44,44,44" },
     { skuPrefix: "NAU", model: "Náuticos Rojo", sizesCsv: "38,39,40,40,40,41,41,41,42,42,42,43,43,43,44,44,44" },
     { skuPrefix: "NAU", model: "Náuticos Verde", sizesCsv: "38,39,40,40,40,41,41,41,42,42,42,43,43,43,44,44,44" },
+    // Colecciones de dama (inventario real de fábrica)
+    { skuPrefix: "MJ", model: "M Jane Verde", sizesCsv: "35,35,35,36,36,36,37,37,37,38,38,39" },
+    { skuPrefix: "MJ", model: "M Jane Rojo", sizesCsv: "35,35,35,36,36,36,37,37,37,38,38,39" },
+    { skuPrefix: "MJ", model: "M Jane Blanco", sizesCsv: "35,35,35,36,36,36,37,37,37,38,38,39" },
+    { skuPrefix: "C4B", model: "Miel crema", counts: { "35": 20, "36": 20, "37": 20, "38": 10, "39": 10 } },
+    { skuPrefix: "C4B", model: "Beige arena", counts: { "35": 20, "36": 20, "37": 20, "38": 10, "39": 10 } },
+    { skuPrefix: "FEL", model: "Pelo print chita negro", sizesCsv: "35,35,35,36,36,36,37,37,37,38,38,39" },
+    { skuPrefix: "FEL", model: "Pelo print leopardo", sizesCsv: "35,35,35,36,36,36,37,37,37,38,38,39" },
+    { skuPrefix: "FEL", model: "Borgoña", sizesCsv: "35,35,35,36,36,36,37,37,37,38,38,39" },
+    {
+      skuPrefix: "CC4",
+      model: "Correa C4bos Miel crema",
+      counts: { M: 20, L: 20, XL: 20, XXL: 20 },
+    },
+    {
+      skuPrefix: "CC4",
+      model: "Correa C4bos Beige arena",
+      counts: { M: 20, L: 20, XL: 20, XXL: 20 },
+    },
+    { skuPrefix: "CMJ", model: "Correa M Jane Verde", sizesCsv: "M,M,M,L,L,L,XL,XL,XL,XXL,XXL,XXL" },
+    { skuPrefix: "CMJ", model: "Correa M Jane Rojo", sizesCsv: "M,M,M,L,L,L,XL,XL,XL,XXL,XXL,XXL" },
+    { skuPrefix: "CMJ", model: "Correa M Jane Blanco", sizesCsv: "M,M,M,L,L,L,XL,XL,XL,XXL,XXL,XXL" },
+    {
+      skuPrefix: "CFE",
+      model: "Correa Feline Pelo print chita negro",
+      sizesCsv: "M,M,M,L,L,L,XL,XL,XL,XXL,XXL,XXL",
+    },
+    {
+      skuPrefix: "CFE",
+      model: "Correa Feline Pelo print leopardo",
+      sizesCsv: "M,M,M,L,L,L,XL,XL,XL,XXL,XXL,XXL",
+    },
+    { skuPrefix: "CFE", model: "Correa Feline Borgoña", sizesCsv: "M,M,M,L,L,L,XL,XL,XL,XXL,XXL,XXL" },
   ];
 
   const factoryMarkerSku = `WR-DEP-${slugify("Dallas real")}-39`;
@@ -562,7 +684,7 @@ async function main() {
     let factoryVariants = 0;
     let factoryUnits = 0;
     for (const def of factoryStockDefs) {
-      const counts = sizeCounts(def.sizesCsv);
+      const counts = def.counts ?? sizeCounts(def.sizesCsv!);
       for (const [size, quantity] of Object.entries(counts)) {
         const sku = `WR-${def.skuPrefix}-${slugify(def.model)}-${size}`;
         const product = sizedProducts.find((p) => p.sku === sku);
