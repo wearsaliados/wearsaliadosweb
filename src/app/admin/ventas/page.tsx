@@ -14,7 +14,7 @@ export default async function VentasPage() {
   });
 
   const totalWearsProfit = sales.reduce(
-    (s, sale) => s + (sale.unitPrice - sale.unitCost) * sale.quantity,
+    (s, sale) => s + (sale.unitCost - sale.product.manufacturingCost) * sale.quantity,
     0
   );
   const totalUnits = sales.reduce((s, sale) => s + sale.quantity, 0);
@@ -28,7 +28,8 @@ export default async function VentasPage() {
         <p className="text-sm text-wears-espresso/60">
           Registro de todas las ventas reportadas por los aliados ({sales.length}{" "}
           últimas · {totalUnits} unidades · {formatUSD(totalWearsProfit)} de
-          ganancia para Wears — el resto del valor de venta es del aliado). Para
+          ganancia para Wears — costo al aliado menos costo de fabricación).
+          Para
           ventas directas de la tienda en línea o el punto físico, mira{" "}
           <Link href="/admin/movimientos" className="text-wears-gold hover:underline">
             Movimientos
@@ -66,7 +67,7 @@ export default async function VentasPage() {
                     {formatUSD(s.quantity * s.unitPrice)}
                   </td>
                   <td className="py-2 pr-4 text-emerald-600">
-                    {formatUSD((s.unitPrice - s.unitCost) * s.quantity)}
+                    {formatUSD((s.unitCost - s.product.manufacturingCost) * s.quantity)}
                   </td>
                   <td className="py-2 pr-4 text-wears-espresso/60">{s.note ?? "—"}</td>
                 </tr>

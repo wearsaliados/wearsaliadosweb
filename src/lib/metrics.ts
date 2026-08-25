@@ -127,8 +127,12 @@ export async function getAdminDashboardMetrics() {
   const alliesRanking = [...salesByAlly.values()].sort((a, b) => b.units - a.units);
   const productsRanking = [...salesByProduct.values()].sort((a, b) => b.units - a.units);
 
-  // Rentabilidad: ganancia real de Wears por canal (aliados = solo margen,
-  // tienda web/física = valor completo de la venta) agrupada por día, mes y año.
+  // Rentabilidad: ganancia real de Wears por canal, siempre sobre lo que
+  // Wears realmente recibe por unidad menos su costo de fabricación.
+  // Directo (web/física): precio de venta − fabricación.
+  // Aliados: costo al que se le entregó al aliado (ya cobrado por
+  // consignación) − fabricación — el margen propio del aliado no es de Wears.
+  // Agrupado por día, mes y año.
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -145,8 +149,8 @@ export async function getAdminDashboardMetrics() {
 
   for (const sale of sales) {
     const profit = sale.ally
-      ? (sale.unitPrice - sale.unitCost) * sale.quantity
-      : sale.unitPrice * sale.quantity;
+      ? (sale.unitCost - sale.product.manufacturingCost) * sale.quantity
+      : (sale.unitPrice - sale.product.manufacturingCost) * sale.quantity;
     const channel: "web" | "store" | "ally" | null = sale.ally
       ? "ally"
       : sale.location.type === "WEB"

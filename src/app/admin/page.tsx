@@ -249,9 +249,11 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
         <p className="mb-3 text-xs text-wears-espresso/50">
-          En ventas de aliados se muestra solo la ganancia de Wears (el resto
-          es del aliado); en ventas directas de tienda web o punto físico se
-          muestra el valor completo, porque es 100% de Wears.
+          Se muestra la ganancia real de Wears: en ventas directas (tienda web
+          o punto físico) es precio de venta menos costo de fabricación; en
+          ventas de aliados es el costo al que se les entregó el producto
+          menos el costo de fabricación (el margen propio del aliado no es
+          de Wears).
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -276,8 +278,8 @@ export default async function AdminDashboardPage() {
                   <td className="py-2 pr-4 text-emerald-600">
                     {formatUSD(
                       s.ally
-                        ? (s.unitPrice - s.unitCost) * s.quantity
-                        : s.unitPrice * s.quantity
+                        ? (s.unitCost - s.product.manufacturingCost) * s.quantity
+                        : (s.unitPrice - s.product.manufacturingCost) * s.quantity
                     )}
                   </td>
                 </tr>
