@@ -162,7 +162,7 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Ventas en tienda web"
           value={formatUSD(m.directSales.WEB.revenue)}
@@ -172,6 +172,11 @@ export default async function AdminDashboardPage() {
           label="Ventas en tienda física"
           value={formatUSD(m.directSales.STORE.revenue)}
           hint={`${m.directSales.STORE.units} unidades vendidas`}
+        />
+        <StatCard
+          label="Ventas en aliados comerciales"
+          value={formatUSD(m.allySales.revenue)}
+          hint={`${m.allySales.units} unidades vendidas · precio final de todos los aliados`}
         />
       </div>
 

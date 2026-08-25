@@ -100,6 +100,7 @@ export async function getAdminDashboardMetrics() {
   const salesByAlly = new Map<string, { name: string; units: number; revenue: number }>();
   const salesByProduct = new Map<string, { name: string; units: number }>();
   const directSales = { WEB: { units: 0, revenue: 0 }, STORE: { units: 0, revenue: 0 } };
+  const allySales = { units: 0, revenue: 0 };
 
   for (const sale of sales) {
     if (sale.ally) {
@@ -111,6 +112,8 @@ export async function getAdminDashboardMetrics() {
       allyEntry.units += sale.quantity;
       allyEntry.revenue += sale.quantity * sale.unitPrice;
       salesByAlly.set(sale.allyId!, allyEntry);
+      allySales.units += sale.quantity;
+      allySales.revenue += sale.quantity * sale.unitPrice;
     } else if (sale.location.type === "WEB" || sale.location.type === "STORE") {
       directSales[sale.location.type].units += sale.quantity;
       directSales[sale.location.type].revenue += sale.quantity * sale.unitPrice;
@@ -211,6 +214,7 @@ export async function getAdminDashboardMetrics() {
     totalDebt,
     alliesWithDebt,
     directSales,
+    allySales,
     profitability,
     pendingSupportCount,
     recentSales: sales.slice(0, 8),
