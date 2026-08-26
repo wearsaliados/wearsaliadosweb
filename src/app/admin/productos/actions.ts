@@ -9,6 +9,7 @@ const NEW_COLLECTION_VALUE = "__new__";
 
 const productSchema = z.object({
   sku: z.string().min(2, "El SKU es obligatorio"),
+  barcode: z.string().optional(),
   name: z.string().min(2, "El nombre es obligatorio"),
   description: z.string().optional(),
   price: z.coerce.number().min(0),
@@ -51,6 +52,7 @@ export async function createProduct(
     await prisma.product.create({
       data: {
         sku: data.sku.trim(),
+        barcode: data.barcode?.trim() || null,
         name: data.name.trim(),
         description: data.description || null,
         price: data.price,
@@ -62,7 +64,7 @@ export async function createProduct(
       },
     });
   } catch {
-    return { error: "Ya existe un producto con ese SKU" };
+    return { error: "Ya existe un producto con ese SKU o código de barras" };
   }
 
   revalidatePath("/admin/productos");
@@ -113,4 +115,68 @@ export async function createCollection(
 
   revalidatePath("/admin/productos");
   return { success: "Colección creada" };
+}
+
+const updateCollectionSchema = z.object({
+  upcoming: z.coerce.boolean().optional(),
+  visibleToAllies: z.coerce.boolean().optional(),
+  imageUrl: z.string().optional(),
+});
+
+export async function updateCollectionFlags(
+  collectionId: string,
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  await requireAdmin();
+  const parsed = updateCollectionSchema.safeParse({
+    upcoming: formData.get("upcoming") === "on",
+    visibleToAllies: formData.get("visibleToAllies") === "on",
+    imageUrl: formData.get("imageUrl"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+  }
+  const data = parsed.data;
+
+  await prisma.collection.update({
+    where: { id: collectionId },
+    data: {
+      upcoming: data.upcoming ?? false,
+      visibleToAllies: data.visibleToAllies ?? false,
+      imageUrl: data.imageUrl || null,
+    },
+  });
+
+  revalidatePath("/admin/productos");
+  revalidatePath("/aliado");
+  revalidatePath("/aliado/colecciones");
+  revalidatePath("/aliado/ventas");
+  return { success: "Colección actualizada" };
+}
+
+const barcodeSchema = z.object({
+  barcode: z.string().optional(),
+});
+
+export async function updateProductBarcode(
+  productId: string,
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  await requireAdmin();
+  const parsed = barcodeSchema.safeParse({ barcode: formData.get("barcode") });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+  }
+  const barcode = parsed.data.barcode?.trim() || null;
+
+  try {
+    await prisma.product.update({ where: { id: productId }, data: { barcode } });
+  } catch {
+    return { error: "Ese código de barras ya está en uso por otro producto" };
+  }
+
+  revalidatePath("/admin/productos");
+  return { success: "Código de barras actualizado" };
 }

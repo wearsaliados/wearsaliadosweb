@@ -13,6 +13,7 @@ export type BrowserItem = {
   acquisitionType: "PURCHASE" | "CONSIGNMENT";
   collectionId: string;
   collectionName: string;
+  collectionImageUrl: string | null;
 };
 
 function modelNameOf(item: BrowserItem) {
@@ -32,11 +33,16 @@ export default function InventoryBrowser({ items }: { items: BrowserItem[] }) {
   const collections = Array.from(
     items.reduce((map, i) => {
       if (!map.has(i.collectionId)) {
-        map.set(i.collectionId, { id: i.collectionId, name: i.collectionName, count: 0 });
+        map.set(i.collectionId, {
+          id: i.collectionId,
+          name: i.collectionName,
+          count: 0,
+          imageUrl: i.collectionImageUrl,
+        });
       }
       map.get(i.collectionId)!.count += i.quantity;
       return map;
-    }, new Map<string, { id: string; name: string; count: number }>())
+    }, new Map<string, { id: string; name: string; count: number; imageUrl: string | null }>())
   ).map(([, v]) => v);
 
   const itemsInCollection = items.filter((i) => i.collectionId === collectionId);
@@ -111,10 +117,16 @@ export default function InventoryBrowser({ items }: { items: BrowserItem[] }) {
               key={c.id}
               type="button"
               onClick={() => chooseCollection(c.id)}
-              className="flex flex-col items-start gap-1 rounded-xl border border-wears-tan/30 p-4 text-left transition hover:border-wears-gold hover:bg-wears-gold/5"
+              className="flex flex-col items-start gap-1 overflow-hidden rounded-xl border border-wears-tan/30 text-left transition hover:border-wears-gold hover:bg-wears-gold/5"
             >
-              <span className="text-sm font-medium text-wears-black">{c.name}</span>
-              <span className="text-xs text-wears-espresso/60">{c.count} disponibles</span>
+              {c.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={c.imageUrl} alt="" className="h-20 w-full object-cover" />
+              )}
+              <span className="flex flex-col gap-1 p-4">
+                <span className="text-sm font-medium text-wears-black">{c.name}</span>
+                <span className="text-xs text-wears-espresso/60">{c.count} disponibles</span>
+              </span>
             </button>
           ))}
         </div>

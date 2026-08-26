@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatUSD } from "@/lib/inventory";
 import DirectSaleForm from "./direct-sale-form";
+import GiveawayForm from "./giveaway-form";
 
 const MOVEMENT_TYPE_LABEL: Record<string, string> = {
   RECEIVE: "Entrada",
@@ -22,9 +23,13 @@ const MOVEMENT_TYPE_CLASSES: Record<string, string> = {
 export default async function MovimientosPage() {
   await requireAdmin();
 
-  const [directLocations, products, directSales, movements] = await Promise.all([
+  const [directLocations, giveawayLocations, products, directSales, movements] = await Promise.all([
     prisma.location.findMany({
       where: { type: { in: ["WEB", "STORE"] } },
+      orderBy: { name: "asc" },
+    }),
+    prisma.location.findMany({
+      where: { type: { not: "ALLY" } },
       orderBy: { name: "asc" },
     }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
@@ -62,6 +67,21 @@ export default async function MovimientosPage() {
         </p>
         <DirectSaleForm
           locations={directLocations.map((l) => ({ id: l.id, name: l.name }))}
+          products={products}
+        />
+      </section>
+
+      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
+        <h2 className="mb-1 font-semibold text-wears-black">
+          Registrar entrega por publicidad o embajadores de marca
+        </h2>
+        <p className="mb-3 text-xs text-wears-espresso/50">
+          Para productos que se entregan sin cobrar, como inversión de
+          publicidad o regalos a embajadores de marca. Solo descuenta
+          inventario, no genera ingreso.
+        </p>
+        <GiveawayForm
+          locations={giveawayLocations.map((l) => ({ id: l.id, name: l.name }))}
           products={products}
         />
       </section>

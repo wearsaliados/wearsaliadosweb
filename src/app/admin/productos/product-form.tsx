@@ -36,6 +36,11 @@ export default function ProductForm({
         required
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
       />
+      <input
+        name="barcode"
+        placeholder="Código de barras (opcional)"
+        className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
+      />
       <select
         name="collectionId"
         defaultValue=""

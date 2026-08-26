@@ -481,7 +481,7 @@ async function main() {
         locationId: locSambil.id,
         productId: sandaliasHDA.id,
         quantity: extraQuantity,
-        unitPrice: sandaliasHDA.price,
+        unitPrice: 80,
         unitCost: sandaliasHDA.cost,
         note: "Venta inicial pagada directamente a Wears",
       },

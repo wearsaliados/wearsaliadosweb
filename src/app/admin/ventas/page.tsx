@@ -2,6 +2,8 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatUSD } from "@/lib/inventory";
+import StatCard from "@/components/stat-card";
+import CollectToggle from "./collect-toggle";
 
 export default async function VentasPage() {
   await requireAdmin();
@@ -18,6 +20,14 @@ export default async function VentasPage() {
     0
   );
   const totalUnits = sales.reduce((s, sale) => s + sale.quantity, 0);
+  const totalToCollect = sales.reduce(
+    (s, sale) => s + (sale.collected ? 0 : sale.unitCost * sale.quantity),
+    0
+  );
+  const totalCollected = sales.reduce(
+    (s, sale) => s + (sale.collected ? sale.unitCost * sale.quantity : 0),
+    0
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -38,6 +48,21 @@ export default async function VentasPage() {
         </p>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <StatCard
+          label="Por cobrar a aliados"
+          value={formatUSD(totalToCollect)}
+          hint="Costo de las unidades vendidas que aún no se han pagado a Wears"
+          tone={totalToCollect > 0 ? "warning" : "default"}
+        />
+        <StatCard
+          label="Cobrado"
+          value={formatUSD(totalCollected)}
+          hint="Costo de las unidades vendidas ya pagadas a Wears"
+          tone="success"
+        />
+      </div>
+
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -50,6 +75,7 @@ export default async function VentasPage() {
                 <th className="py-2 pr-4">Precio unitario</th>
                 <th className="py-2 pr-4">Total venta</th>
                 <th className="py-2 pr-4">Ganancia Wears</th>
+                <th className="py-2 pr-4">Cobro</th>
                 <th className="py-2 pr-4">Nota</th>
               </tr>
             </thead>
@@ -69,12 +95,15 @@ export default async function VentasPage() {
                   <td className="py-2 pr-4 text-emerald-600">
                     {formatUSD((s.unitCost - s.product.manufacturingCost) * s.quantity)}
                   </td>
+                  <td className="py-2 pr-4">
+                    <CollectToggle saleId={s.id} collected={s.collected} />
+                  </td>
                   <td className="py-2 pr-4 text-wears-espresso/60">{s.note ?? "—"}</td>
                 </tr>
               ))}
               {sales.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="py-4 text-center text-wears-espresso/50">
+                  <td colSpan={9} className="py-4 text-center text-wears-espresso/50">
                     Aún no hay ventas registradas.
                   </td>
                 </tr>

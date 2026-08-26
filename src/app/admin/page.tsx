@@ -162,6 +162,21 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <StatCard
+          label="Ventas de aliados por cobrar"
+          value={formatUSD(m.totalToCollect)}
+          tone={m.totalToCollect > 0 ? "warning" : "default"}
+          hint="Costo de unidades vendidas por aliados, aún no pagadas a Wears"
+        />
+        <StatCard
+          label="Ventas de aliados cobradas"
+          value={formatUSD(m.totalCollected)}
+          tone="success"
+          hint="Costo de unidades vendidas por aliados, ya pagadas a Wears"
+        />
+      </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Ventas en tienda web"
@@ -269,6 +284,7 @@ export default async function AdminDashboardPage() {
                 <th className="py-2 pr-4">Producto</th>
                 <th className="py-2 pr-4">Cantidad</th>
                 <th className="py-2 pr-4">Para Wears</th>
+                <th className="py-2 pr-4">Cobro</th>
               </tr>
             </thead>
             <tbody>
@@ -287,11 +303,26 @@ export default async function AdminDashboardPage() {
                         : (s.unitPrice - s.product.manufacturingCost) * s.quantity
                     )}
                   </td>
+                  <td className="py-2 pr-4">
+                    {s.ally ? (
+                      <span
+                        className={`rounded-full border px-2 py-0.5 text-xs ${
+                          s.collected
+                            ? "border-emerald-300 bg-emerald-100 text-emerald-700"
+                            : "border-amber-300 bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {s.collected ? "Cobrado" : "Por cobrar"}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                 </tr>
               ))}
               {m.recentSales.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-4 text-center text-wears-espresso/50">
+                  <td colSpan={6} className="py-4 text-center text-wears-espresso/50">
                     Aún no hay ventas registradas.
                   </td>
                 </tr>

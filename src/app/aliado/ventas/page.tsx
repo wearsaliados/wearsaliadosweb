@@ -29,8 +29,10 @@ export default async function AllyVentasPage() {
     size: i.product.size,
     quantity: i.quantity,
     price: i.product.price,
+    barcode: i.product.barcode,
     collectionId: i.product.collectionId ?? "sin-coleccion",
     collectionName: i.product.collection?.name ?? "Otros productos",
+    collectionImageUrl: i.product.collection?.imageUrl ?? null,
   }));
 
   const totalProfit = allProfitSales.reduce(

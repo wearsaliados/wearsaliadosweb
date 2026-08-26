@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import ProductForm from "./product-form";
 import CollectionForm from "./collection-form";
+import CollectionManager from "./collection-manager";
 import ProductCatalog from "./product-catalog";
 
 export default async function ProductosPage() {
@@ -27,20 +28,15 @@ export default async function ProductosPage() {
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
         <h2 className="mb-3 font-semibold text-wears-black">Colecciones</h2>
         <CollectionForm />
-        <ul className="mt-4 flex flex-wrap gap-2">
-          {collections.map((c) => (
-            <li
-              key={c.id}
-              className={`rounded-full border px-3 py-1 text-xs ${
-                c.upcoming
-                  ? "border-wears-gold bg-wears-gold/10 text-wears-espresso"
-                  : "border-wears-tan/30 text-wears-espresso/70"
-              }`}
-            >
-              {c.name} {c.upcoming && "· próxima"}
-            </li>
-          ))}
-        </ul>
+        <CollectionManager
+          collections={collections.map((c) => ({
+            id: c.id,
+            name: c.name,
+            upcoming: c.upcoming,
+            visibleToAllies: c.visibleToAllies,
+            imageUrl: c.imageUrl,
+          }))}
+        />
       </section>
 
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
@@ -56,6 +52,7 @@ export default async function ProductosPage() {
           products={products.map((p) => ({
             id: p.id,
             sku: p.sku,
+            barcode: p.barcode,
             name: p.name,
             price: p.price,
             cost: p.cost,

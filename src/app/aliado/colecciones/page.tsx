@@ -4,16 +4,34 @@ import { prisma } from "@/lib/prisma";
 import { requestPreorder } from "../soporte/actions";
 
 export default async function AllyColeccionesPage() {
-  await requireAlly();
+  const session = await requireAlly();
 
-  const [upcoming, active] = await Promise.all([
-    prisma.collection.findMany({ where: { upcoming: true }, orderBy: { createdAt: "desc" } }),
+  const [upcoming, location] = await Promise.all([
     prisma.collection.findMany({
-      where: { upcoming: false },
-      include: { products: { where: { active: true } } },
-      orderBy: { name: "asc" },
+      where: { upcoming: true, visibleToAllies: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.location.findUnique({
+      where: { allyId: session.allyId },
+      include: {
+        inventoryItems: {
+          where: { quantity: { gt: 0 } },
+          include: { product: { include: { collection: true } } },
+        },
+      },
     }),
   ]);
+
+  // Solo colecciones vigentes que el aliado realmente tiene en inventario.
+  const stockByCollection = new Map<string, { id: string; name: string; count: number }>();
+  for (const item of location?.inventoryItems ?? []) {
+    const c = item.product.collection;
+    if (!c || c.upcoming || !c.visibleToAllies) continue;
+    const entry = stockByCollection.get(c.id) ?? { id: c.id, name: c.name, count: 0 };
+    entry.count += 1;
+    stockByCollection.set(c.id, entry);
+  }
+  const active = [...stockByCollection.values()].sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="flex flex-col gap-8">
@@ -74,10 +92,16 @@ export default async function AllyColeccionesPage() {
             >
               <p className="font-medium text-wears-black">{c.name}</p>
               <p className="text-xs text-wears-espresso/60">
-                {c.products.length} productos disponibles
+                {c.count} {c.count === 1 ? "modelo disponible" : "modelos disponibles"} en tu
+                inventario
               </p>
             </div>
           ))}
+          {active.length === 0 && (
+            <p className="text-sm text-wears-espresso/50">
+              Aún no tienes colecciones vigentes en tu inventario.
+            </p>
+          )}
         </div>
       </div>
     </div>

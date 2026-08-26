@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { formatUSD } from "@/lib/inventory";
-import { toggleProductActive } from "./actions";
+import { toggleProductActive, updateProductBarcode, type FormState } from "./actions";
 
 type CatalogProduct = {
   id: string;
   sku: string;
+  barcode: string | null;
   name: string;
   price: number;
   cost: number;
@@ -15,11 +16,41 @@ type CatalogProduct = {
   totalStock: number;
 };
 
+const initialBarcodeState: FormState = {};
+
+function BarcodeCell({ p }: { p: CatalogProduct }) {
+  const [state, formAction, pending] = useActionState(
+    updateProductBarcode.bind(null, p.id),
+    initialBarcodeState
+  );
+  return (
+    <form action={formAction} className="flex items-center gap-1">
+      <input
+        name="barcode"
+        defaultValue={p.barcode ?? ""}
+        placeholder="Sin código"
+        className="w-28 rounded-lg border border-wears-tan/30 px-2 py-1 text-xs"
+      />
+      <button
+        type="submit"
+        disabled={pending}
+        className="text-xs text-wears-gold hover:underline disabled:opacity-60"
+      >
+        {pending ? "..." : "Guardar"}
+      </button>
+      {state.error && <p className="text-[10px] text-red-600">{state.error}</p>}
+    </form>
+  );
+}
+
 function ProductRow({ p }: { p: CatalogProduct }) {
   return (
     <tr className="border-b border-wears-tan/10">
       <td className="py-2 pr-4 font-mono text-xs">{p.sku}</td>
       <td className="py-2 pr-4">{p.name}</td>
+      <td className="py-2 pr-4">
+        <BarcodeCell p={p} />
+      </td>
       <td className="py-2 pr-4">{formatUSD(p.price)}</td>
       <td className="py-2 pr-4">{formatUSD(p.cost)}</td>
       <td className="py-2 pr-4">{p.totalStock}</td>
@@ -51,6 +82,7 @@ function ProductTable({ products }: { products: CatalogProduct[] }) {
           <tr className="border-b border-wears-tan/20 text-left text-wears-espresso/60">
             <th className="py-2 pr-4">SKU</th>
             <th className="py-2 pr-4">Nombre</th>
+            <th className="py-2 pr-4">Código de barras</th>
             <th className="py-2 pr-4">Precio</th>
             <th className="py-2 pr-4">Costo</th>
             <th className="py-2 pr-4">Stock total</th>

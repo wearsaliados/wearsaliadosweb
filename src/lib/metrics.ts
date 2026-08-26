@@ -172,6 +172,18 @@ export async function getAdminDashboardMetrics() {
     if (sale.saleDate >= startOfYear) applyTo(profitability.annual);
   }
 
+  // Cobro de ventas de aliados: lo que Wears aún debe cobrarle al aliado
+  // por unidades ya vendidas (costo al aliado x cantidad), marcado
+  // manualmente por el admin al recibir el pago.
+  let totalToCollect = 0;
+  let totalCollected = 0;
+  for (const sale of sales) {
+    if (!sale.ally) continue;
+    const amount = sale.unitCost * sale.quantity;
+    if (sale.collected) totalCollected += amount;
+    else totalToCollect += amount;
+  }
+
   const debtByAlly = new Map<string, { name: string; balance: number }>();
   for (const entry of ledgerEntries) {
     const current = debtByAlly.get(entry.allyId) ?? {
@@ -213,6 +225,8 @@ export async function getAdminDashboardMetrics() {
     bottomProducts: [...productsRanking].reverse().slice(0, 5),
     totalDebt,
     alliesWithDebt,
+    totalToCollect,
+    totalCollected,
     directSales,
     allySales,
     profitability,

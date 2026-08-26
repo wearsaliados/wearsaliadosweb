@@ -12,7 +12,10 @@ export type FormState = { error?: string; success?: string };
 const saleSchema = z.object({
   productId: z.string().min(1),
   quantity: z.coerce.number().int().positive("La cantidad debe ser mayor a 0"),
-  unitPrice: z.coerce.number().min(0).optional(),
+  unitPrice: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? undefined : v),
+    z.coerce.number().min(0).optional()
+  ),
   note: z.string().optional(),
 });
 

@@ -55,6 +55,24 @@ export default async function AllyDashboardPage() {
         </p>
       </div>
 
+      <Link
+        href="/aliado/ventas"
+        className="group flex flex-col items-start gap-2 rounded-2xl border-2 border-wears-gold bg-gradient-to-br from-wears-gold to-wears-tan p-6 shadow-md transition hover:shadow-lg sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-wears-black/70">
+            Lo más importante
+          </p>
+          <p className="text-xl font-bold text-wears-black">Registrar una venta</p>
+          <p className="mt-1 text-sm text-wears-black/70">
+            Anota lo que vendiste para reponer tu inventario y llevar tu control.
+          </p>
+        </div>
+        <span className="rounded-full bg-wears-black px-6 py-3 text-sm font-semibold text-wears-cream transition group-hover:bg-wears-espresso">
+          Registrar venta →
+        </span>
+      </Link>
+
       {outOfStock.length > 0 && (
         <section className="rounded-xl border-2 border-red-400 bg-red-50 p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
@@ -108,9 +126,6 @@ export default async function AllyDashboardPage() {
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold text-wears-black">Mi inventario</h2>
-          <Link href="/aliado/ventas" className="text-sm text-wears-gold hover:underline">
-            Registrar una venta
-          </Link>
         </div>
         <InventoryBrowser
           items={items.map((item) => ({
@@ -122,6 +137,7 @@ export default async function AllyDashboardPage() {
             acquisitionType: item.acquisitionType,
             collectionId: item.product.collectionId ?? "sin-coleccion",
             collectionName: item.product.collection?.name ?? "Otros productos",
+            collectionImageUrl: item.product.collection?.imageUrl ?? null,
           }))}
         />
       </section>
