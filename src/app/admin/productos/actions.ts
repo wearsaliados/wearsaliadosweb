@@ -2,10 +2,35 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
 const NEW_COLLECTION_VALUE = "__new__";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Sube la imagen de portada de una colección a Vercel Blob si el admin
+ * adjuntó un archivo nuevo. Devuelve undefined si no se adjuntó nada
+ * (para no tocar la imagen existente), o la URL pública subida.
+ */
+async function uploadCollectionImage(
+  formData: FormData
+): Promise<{ url?: string; error?: string }> {
+  const file = formData.get("imageFile");
+  if (!(file instanceof File) || file.size === 0) return {};
+  if (!file.type.startsWith("image/")) {
+    return { error: "El archivo debe ser una imagen" };
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    return { error: "La imagen no puede pesar más de 5 MB" };
+  }
+  const blob = await put(`collections/${Date.now()}-${file.name}`, file, {
+    access: "public",
+    addRandomSuffix: true,
+  });
+  return { url: blob.url };
+}
 
 const productSchema = z.object({
   sku: z.string().min(2, "El SKU es obligatorio"),
@@ -81,7 +106,6 @@ const collectionSchema = z.object({
   name: z.string().min(2, "El nombre es obligatorio"),
   upcoming: z.coerce.boolean().optional(),
   launchNote: z.string().optional(),
-  imageUrl: z.string().optional(),
 });
 
 export async function createCollection(
@@ -93,12 +117,14 @@ export async function createCollection(
     name: formData.get("name"),
     upcoming: formData.get("upcoming") === "on",
     launchNote: formData.get("launchNote"),
-    imageUrl: formData.get("imageUrl"),
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
   const data = parsed.data;
+
+  const uploaded = await uploadCollectionImage(formData);
+  if (uploaded.error) return { error: uploaded.error };
 
   try {
     await prisma.collection.create({
@@ -106,7 +132,7 @@ export async function createCollection(
         name: data.name.trim(),
         upcoming: data.upcoming ?? false,
         launchNote: data.launchNote || null,
-        imageUrl: data.imageUrl || null,
+        imageUrl: uploaded.url ?? null,
       },
     });
   } catch {
@@ -120,7 +146,7 @@ export async function createCollection(
 const updateCollectionSchema = z.object({
   upcoming: z.coerce.boolean().optional(),
   visibleToAllies: z.coerce.boolean().optional(),
-  imageUrl: z.string().optional(),
+  removeImage: z.coerce.boolean().optional(),
 });
 
 export async function updateCollectionFlags(
@@ -132,19 +158,22 @@ export async function updateCollectionFlags(
   const parsed = updateCollectionSchema.safeParse({
     upcoming: formData.get("upcoming") === "on",
     visibleToAllies: formData.get("visibleToAllies") === "on",
-    imageUrl: formData.get("imageUrl"),
+    removeImage: formData.get("removeImage") === "on",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
   const data = parsed.data;
 
+  const uploaded = await uploadCollectionImage(formData);
+  if (uploaded.error) return { error: uploaded.error };
+
   await prisma.collection.update({
     where: { id: collectionId },
     data: {
       upcoming: data.upcoming ?? false,
       visibleToAllies: data.visibleToAllies ?? false,
-      imageUrl: data.imageUrl || null,
+      ...(uploaded.url ? { imageUrl: uploaded.url } : data.removeImage ? { imageUrl: null } : {}),
     },
   });
 

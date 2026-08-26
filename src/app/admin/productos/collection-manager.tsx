@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { updateCollectionFlags, type FormState } from "./actions";
 
 const initialState: FormState = {};
@@ -18,13 +18,27 @@ function CollectionRow({ c }: { c: ManagedCollection }) {
     updateCollectionFlags.bind(null, c.id),
     initialState
   );
+  const [preview, setPreview] = useState<string | null>(c.imageUrl);
+  const [removeImage, setRemoveImage] = useState(false);
 
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-2 rounded-lg border border-wears-tan/20 p-3 sm:flex-row sm:items-center sm:gap-4"
+      className="flex flex-col gap-3 rounded-lg border border-wears-tan/20 p-3 sm:flex-row sm:items-center sm:gap-4"
     >
-      <span className="min-w-[10rem] font-medium text-wears-black">{c.name}</span>
+      {preview && !removeImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={preview}
+          alt=""
+          className="h-14 w-14 shrink-0 rounded-lg object-cover"
+        />
+      ) : (
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-dashed border-wears-tan/40 text-[10px] text-wears-espresso/40">
+          Sin foto
+        </div>
+      )}
+      <span className="min-w-[8rem] font-medium text-wears-black">{c.name}</span>
       <label className="flex items-center gap-2 text-sm text-wears-espresso/70">
         <input type="checkbox" name="upcoming" defaultChecked={c.upcoming} />
         Próximamente
@@ -33,12 +47,37 @@ function CollectionRow({ c }: { c: ManagedCollection }) {
         <input type="checkbox" name="visibleToAllies" defaultChecked={c.visibleToAllies} />
         Visible a aliados
       </label>
-      <input
-        name="imageUrl"
-        defaultValue={c.imageUrl ?? ""}
-        placeholder="URL de imagen"
-        className="flex-1 rounded-lg border border-wears-tan/30 px-3 py-1.5 text-sm"
-      />
+      <label className="flex flex-1 flex-col gap-1 text-xs text-wears-espresso/60">
+        Foto de portada
+        <input
+          name="imageFile"
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setRemoveImage(false);
+              setPreview(URL.createObjectURL(file));
+            }
+          }}
+          className="text-xs text-wears-espresso/70 file:mr-2 file:rounded-full file:border-0 file:bg-wears-gold/20 file:px-3 file:py-1 file:text-xs file:font-medium file:text-wears-espresso"
+        />
+      </label>
+      {c.imageUrl && (
+        <label className="flex items-center gap-2 text-xs text-wears-espresso/60">
+          <input
+            type="checkbox"
+            name="removeImage"
+            checked={removeImage}
+            onChange={(e) => {
+              setRemoveImage(e.target.checked);
+              if (e.target.checked) setPreview(null);
+              else setPreview(c.imageUrl);
+            }}
+          />
+          Quitar foto
+        </label>
+      )}
       <button
         type="submit"
         disabled={pending}

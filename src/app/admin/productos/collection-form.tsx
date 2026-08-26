@@ -26,11 +26,15 @@ export default function CollectionForm() {
         placeholder="Nota de lanzamiento (opcional)"
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
       />
-      <input
-        name="imageUrl"
-        placeholder="URL de imagen (opcional)"
-        className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
-      />
+      <label className="flex flex-col gap-1 text-xs text-wears-espresso/60">
+        Foto de portada (opcional)
+        <input
+          name="imageFile"
+          type="file"
+          accept="image/*"
+          className="text-sm text-wears-espresso/70 file:mr-2 file:rounded-full file:border-0 file:bg-wears-gold/20 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-wears-espresso"
+        />
+      </label>
       <label className="flex items-center gap-2 text-sm text-wears-espresso/70">
         <input type="checkbox" name="upcoming" />
         Próxima colección (se anuncia a aliados)
