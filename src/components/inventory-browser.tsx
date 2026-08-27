@@ -121,7 +121,7 @@ export default function InventoryBrowser({ items }: { items: BrowserItem[] }) {
             >
               {c.imageUrl && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={c.imageUrl} alt="" className="h-20 w-full object-cover" />
+                <img src={c.imageUrl} alt="" className="aspect-square w-full object-cover" />
               )}
               <span className="flex flex-col gap-1 p-4">
                 <span className="text-sm font-medium text-wears-black">{c.name}</span>
