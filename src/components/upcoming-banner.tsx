@@ -15,15 +15,13 @@ export default async function UpcomingBanner() {
       <p className="text-[10px] uppercase tracking-[0.3em] text-wears-gold">
         Próximamente en El Barco Wears
       </p>
-      <div className="mt-2 flex flex-wrap gap-4">
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {upcoming.map((c) => (
-          <div key={c.id} className="flex min-w-[240px] flex-1 flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-medium">{c.name}</p>
-              {c.launchNote && (
-                <p className="text-xs text-wears-sand/70">{c.launchNote}</p>
-              )}
-            </div>
+          <div
+            key={c.id}
+            className="flex items-center justify-between gap-3 rounded-lg border border-wears-cream/10 bg-white/5 px-4 py-3"
+          >
+            <p className="font-medium">{c.name}</p>
             <form action={requestPreorder.bind(null, c.id)}>
               <button
                 type="submit"
