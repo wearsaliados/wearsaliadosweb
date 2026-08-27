@@ -52,7 +52,7 @@ export default async function AllyColeccionesPage() {
             className="overflow-hidden rounded-xl border border-wears-gold/40 bg-gradient-to-br from-wears-black to-wears-espresso text-wears-cream shadow-sm"
           >
             {c.imageUrl && (
-              <div className="relative h-56 w-full">
+              <div className="relative aspect-square w-full">
                 <Image src={c.imageUrl} alt={c.name} fill className="object-cover" sizes="600px" />
               </div>
             )}
