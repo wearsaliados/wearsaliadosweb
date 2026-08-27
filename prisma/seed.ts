@@ -432,7 +432,7 @@ async function main() {
 
   // Primer aliado comercial oficial: Make Waves C.C. Sambil Chacao
   const { ally: sambil, isNew: sambilIsNew } = await ensureAlly({
-    email: "makewakesccsambil",
+    email: "makewavesccsambil",
     password: "308449318",
     businessName: "Make Waves C.C. Sambil Chacao",
     contactName: "Make Waves C.C. Sambil Chacao",
