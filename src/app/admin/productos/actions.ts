@@ -25,11 +25,21 @@ async function uploadCollectionImage(
   if (file.size > MAX_IMAGE_BYTES) {
     return { error: "La imagen no puede pesar más de 5 MB" };
   }
-  const blob = await put(`collections/${Date.now()}-${file.name}`, file, {
-    access: "public",
-    addRandomSuffix: true,
-  });
-  return { url: blob.url };
+  try {
+    const blob = await put(`collections/${Date.now()}-${file.name}`, file, {
+      access: "public",
+      addRandomSuffix: true,
+    });
+    return { url: blob.url };
+  } catch (err) {
+    console.error("Error subiendo imagen a Vercel Blob:", err);
+    return {
+      error:
+        err instanceof Error
+          ? `No se pudo subir la imagen: ${err.message}`
+          : "No se pudo subir la imagen",
+    };
+  }
 }
 
 const productSchema = z.object({
@@ -168,14 +178,23 @@ export async function updateCollectionFlags(
   const uploaded = await uploadCollectionImage(formData);
   if (uploaded.error) return { error: uploaded.error };
 
-  await prisma.collection.update({
-    where: { id: collectionId },
-    data: {
-      upcoming: data.upcoming ?? false,
-      visibleToAllies: data.visibleToAllies ?? false,
-      ...(uploaded.url ? { imageUrl: uploaded.url } : data.removeImage ? { imageUrl: null } : {}),
-    },
-  });
+  try {
+    await prisma.collection.update({
+      where: { id: collectionId },
+      data: {
+        upcoming: data.upcoming ?? false,
+        visibleToAllies: data.visibleToAllies ?? false,
+        ...(uploaded.url
+          ? { imageUrl: uploaded.url }
+          : data.removeImage
+            ? { imageUrl: null }
+            : {}),
+      },
+    });
+  } catch (err) {
+    console.error("Error actualizando colección:", err);
+    return { error: "No se pudo guardar la colección" };
+  }
 
   revalidatePath("/admin/productos");
   revalidatePath("/aliado");
