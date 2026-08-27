@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatUSD } from "@/lib/inventory";
 import StatCard from "@/components/stat-card";
-import CollectToggle from "./collect-toggle";
+import CollectAction from "./collect-action";
 
 export default async function VentasPage() {
   await requireAdmin();
@@ -76,6 +76,7 @@ export default async function VentasPage() {
                 <th className="py-2 pr-4">Total venta</th>
                 <th className="py-2 pr-4">Ganancia Wears</th>
                 <th className="py-2 pr-4">Cobro</th>
+                <th className="py-2 pr-4">Comprobante</th>
                 <th className="py-2 pr-4">Nota</th>
               </tr>
             </thead>
@@ -96,14 +97,32 @@ export default async function VentasPage() {
                     {formatUSD((s.unitCost - s.product.manufacturingCost) * s.quantity)}
                   </td>
                   <td className="py-2 pr-4">
-                    <CollectToggle saleId={s.id} collected={s.collected} />
+                    <CollectAction
+                      saleId={s.id}
+                      allyName={s.ally?.businessName ?? "este aliado"}
+                      collected={s.collected}
+                    />
+                  </td>
+                  <td className="py-2 pr-4">
+                    {s.paymentProofUrl ? (
+                      <a
+                        href={s.paymentProofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-wears-gold hover:underline"
+                      >
+                        Ver comprobante
+                      </a>
+                    ) : (
+                      <span className="text-xs text-wears-espresso/40">—</span>
+                    )}
                   </td>
                   <td className="py-2 pr-4 text-wears-espresso/60">{s.note ?? "—"}</td>
                 </tr>
               ))}
               {sales.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="py-4 text-center text-wears-espresso/50">
+                  <td colSpan={10} className="py-4 text-center text-wears-espresso/50">
                     Aún no hay ventas registradas.
                   </td>
                 </tr>

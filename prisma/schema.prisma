@@ -185,6 +185,7 @@ model Sale {
   unitPrice  Float
   unitCost   Float    @default(0)
   collected  Boolean  @default(false)
+  paymentProofUrl String?
   saleDate   DateTime @default(now())
   note       String?
   createdAt  DateTime @default(now())
