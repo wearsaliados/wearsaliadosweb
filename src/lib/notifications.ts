@@ -107,8 +107,20 @@ async function sendWhatsApp(input: NotifyInput) {
         body: JSON.stringify({
           messaging_product: "whatsapp",
           to: WHATSAPP_TO,
-          type: "text",
-          text: { body: `${input.subject}\n\n${input.message}` },
+          type: "template",
+          template: {
+            name: "notificacion_wears",
+            language: { code: "es" },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  { type: "text", text: input.subject },
+                  { type: "text", text: input.message },
+                ],
+              },
+            ],
+          },
         }),
       }
     );
