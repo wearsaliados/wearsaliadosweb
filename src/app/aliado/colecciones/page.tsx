@@ -61,15 +61,12 @@ export default async function AllyColeccionesPage() {
                 Próximamente
               </p>
               <h2 className="mt-2 text-xl font-semibold">{c.name}</h2>
-              {c.launchNote && (
-                <p className="mt-2 text-sm text-wears-sand/80">{c.launchNote}</p>
-              )}
               <form action={requestPreorder.bind(null, c.id)} className="mt-4">
                 <button
                   type="submit"
                   className="rounded-full bg-wears-gold px-5 py-2 text-sm font-medium text-wears-black transition hover:bg-wears-tan"
                 >
-                  Pídelos con antelación — pedido mínimo 15 pares
+                  Selecciona para pedir con antelación, nos comunicaremos contigo
                 </button>
               </form>
             </div>
