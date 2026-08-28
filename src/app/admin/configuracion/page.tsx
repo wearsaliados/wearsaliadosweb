@@ -99,6 +99,7 @@ export default async function ConfiguracionPage() {
                 <th className="py-2 pr-4">Evento</th>
                 <th className="py-2 pr-4">Destino</th>
                 <th className="py-2 pr-4">Estado</th>
+                <th className="py-2 pr-4">Detalle</th>
               </tr>
             </thead>
             <tbody>
@@ -117,11 +118,12 @@ export default async function ConfiguracionPage() {
                       {l.status}
                     </span>
                   </td>
+                  <td className="max-w-xs py-2 pr-4 text-xs text-red-600">{l.error ?? "—"}</td>
                 </tr>
               ))}
               {logs.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-4 text-center text-wears-espresso/50">
+                  <td colSpan={6} className="py-4 text-center text-wears-espresso/50">
                     Sin notificaciones registradas todavía.
                   </td>
                 </tr>
