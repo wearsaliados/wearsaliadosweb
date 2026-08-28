@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendTestNotification } from "./actions";
 
 const STATUS_CLASSES: Record<string, string> = {
   SENT: "bg-emerald-100 text-emerald-700",
@@ -64,6 +65,26 @@ export default async function ConfiguracionPage() {
           </p>
         </div>
       </div>
+
+      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-medium text-wears-black">Probar notificaciones</p>
+            <p className="text-sm text-wears-espresso/60">
+              Envía un mensaje de prueba por correo y WhatsApp, sin necesidad de registrar una
+              venta o solicitud real.
+            </p>
+          </div>
+          <form action={sendTestNotification}>
+            <button
+              type="submit"
+              className="rounded-full bg-wears-gold px-5 py-2 text-sm font-medium text-wears-black hover:bg-wears-tan"
+            >
+              Enviar notificación de prueba
+            </button>
+          </form>
+        </div>
+      </section>
 
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
         <h2 className="mb-3 font-semibold text-wears-black">
