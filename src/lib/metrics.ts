@@ -85,7 +85,7 @@ export async function getAdminDashboardMetrics() {
             minStock: item.product.minStock,
           });
         }
-        if (item.quantity === 0) {
+        if (item.quantity === 0 && loc.type !== "WEB") {
           outOfStock.push({
             locationName: loc.ally?.businessName ?? loc.name,
             locationType: loc.type,
