@@ -5,14 +5,19 @@ import { reverseSaleMovement, type FormState } from "./actions";
 
 const initialState: FormState = {};
 
+type ExchangeOption = { id: string; name: string; quantity: number };
+
 export default function ReverseMovementAction({
   movementId,
   productName,
+  exchangeOptions,
 }: {
   movementId: string;
   productName: string;
+  exchangeOptions: ExchangeOption[];
 }) {
   const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
   const [state, formAction, pending] = useActionState(
     reverseSaleMovement.bind(null, movementId),
     initialState
@@ -46,7 +51,8 @@ export default function ReverseMovementAction({
               <select
                 name="reason"
                 required
-                defaultValue=""
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
                 className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
               >
                 <option value="" disabled>
@@ -56,6 +62,25 @@ export default function ReverseMovementAction({
                 <option value="DISGUSTO">Disgusto del cliente</option>
                 <option value="ERROR_FABRICACION">Error de fabricación</option>
               </select>
+
+              {reason === "CAMBIO" && (
+                <select
+                  name="newProductId"
+                  required
+                  defaultValue=""
+                  className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
+                >
+                  <option value="" disabled>
+                    Modelo/talla por el que se cambió
+                  </option>
+                  {exchangeOptions.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name} ({o.quantity} disp.)
+                    </option>
+                  ))}
+                </select>
+              )}
+
               <input
                 name="note"
                 placeholder="Detalle (opcional)"
@@ -75,7 +100,7 @@ export default function ReverseMovementAction({
                   disabled={pending}
                   className="rounded-full bg-wears-gold px-4 py-1.5 text-sm font-medium text-wears-black hover:bg-wears-tan disabled:opacity-60"
                 >
-                  {pending ? "Guardando..." : "Confirmar reversa"}
+                  {pending ? "Guardando..." : "Confirmar"}
                 </button>
               </div>
             </form>

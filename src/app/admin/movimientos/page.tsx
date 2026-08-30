@@ -24,28 +24,46 @@ const MOVEMENT_TYPE_CLASSES: Record<string, string> = {
 export default async function MovimientosPage() {
   await requireAdmin();
 
-  const [directLocations, giveawayLocations, products, directSales, movements] = await Promise.all([
-    prisma.location.findMany({
-      where: { type: { in: ["WEB", "STORE"] } },
-      orderBy: { name: "asc" },
-    }),
-    prisma.location.findMany({
-      where: { type: { not: "ALLY" } },
-      orderBy: { name: "asc" },
-    }),
-    prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
-    prisma.sale.findMany({
-      where: { allyId: null },
-      include: { product: true, location: true },
-      orderBy: { saleDate: "desc" },
-      take: 30,
-    }),
-    prisma.inventoryMovement.findMany({
-      include: { inventoryItem: { include: { product: true, location: { include: { ally: true } } } } },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    }),
-  ]);
+  const [directLocations, giveawayLocations, products, directSales, movements, directInventory] =
+    await Promise.all([
+      prisma.location.findMany({
+        where: { type: { in: ["WEB", "STORE"] } },
+        orderBy: { name: "asc" },
+      }),
+      prisma.location.findMany({
+        where: { type: { not: "ALLY" } },
+        orderBy: { name: "asc" },
+      }),
+      prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+      prisma.sale.findMany({
+        where: { allyId: null },
+        include: { product: true, location: true },
+        orderBy: { saleDate: "desc" },
+        take: 30,
+      }),
+      prisma.inventoryMovement.findMany({
+        include: { inventoryItem: { include: { product: true, location: { include: { ally: true } } } } },
+        orderBy: { createdAt: "desc" },
+        take: 100,
+      }),
+      prisma.inventoryItem.findMany({
+        where: { location: { type: { in: ["WEB", "STORE"] } }, quantity: { gt: 0 } },
+        include: { product: true },
+        orderBy: { product: { name: "asc" } },
+      }),
+    ]);
+
+  // Opciones de intercambio (para "cambio de talla" al reversar una venta),
+  // agrupadas por ubicación.
+  const exchangeOptionsByLocation = new Map<
+    string,
+    { id: string; name: string; quantity: number }[]
+  >();
+  for (const item of directInventory) {
+    const list = exchangeOptionsByLocation.get(item.locationId) ?? [];
+    list.push({ id: item.productId, name: item.product.name, quantity: item.quantity });
+    exchangeOptionsByLocation.set(item.locationId, list);
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -181,6 +199,9 @@ export default async function MovimientosPage() {
                         <ReverseMovementAction
                           movementId={m.id}
                           productName={m.inventoryItem.product.name}
+                          exchangeOptions={
+                            exchangeOptionsByLocation.get(m.inventoryItem.locationId) ?? []
+                          }
                         />
                       )}
                       {m.type === "SALE" && m.reversedAt && (

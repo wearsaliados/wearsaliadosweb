@@ -156,14 +156,21 @@ const REVERSE_REASON_LABEL: Record<string, string> = {
 
 const reverseSaleSchema = z.object({
   reason: z.enum(["CAMBIO", "DISGUSTO", "ERROR_FABRICACION"]),
+  newProductId: z.string().optional(),
   note: z.string().optional(),
 });
 
 /**
  * Reversa una venta directa registrada por error o devuelta (cambio de
- * talla, disgusto del cliente, error de fabricación): devuelve la unidad
- * al inventario y deja un nuevo movimiento visible en el historial. La
- * venta original no se borra, solo queda marcada como reversada.
+ * talla, disgusto del cliente, error de fabricación). En los tres casos
+ * devuelve la unidad vendida al inventario y deja un nuevo movimiento
+ * visible en el historial; la venta original no se borra, solo queda
+ * marcada como reversada.
+ *
+ * Si el motivo es "cambio de talla", además descuenta del inventario el
+ * modelo/talla nuevo que se entregó a cambio, sin crear un ingreso
+ * adicional ni tocar la rentabilidad — es el mismo pago, solo cambió el
+ * producto entregado.
  */
 export async function reverseSaleMovement(
   movementId: string,
@@ -175,7 +182,7 @@ export async function reverseSaleMovement(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
-  const { reason, note } = parsed.data;
+  const { reason, newProductId, note } = parsed.data;
 
   const movement = await prisma.inventoryMovement.findUnique({
     where: { id: movementId },
@@ -190,6 +197,66 @@ export async function reverseSaleMovement(
 
   const quantity = Math.abs(movement.quantityDelta);
   const reasonLabel = REVERSE_REASON_LABEL[reason];
+  const locationId = movement.inventoryItem.locationId;
+
+  if (reason === "CAMBIO") {
+    if (!newProductId) {
+      return { error: "Elige el modelo y la talla por el que se hizo el cambio" };
+    }
+    const newItem = await prisma.inventoryItem.findUnique({
+      where: { productId_locationId: { productId: newProductId, locationId } },
+      include: { product: true },
+    });
+    if (!newItem) {
+      return { error: "Ese producto no tiene inventario en esta ubicación" };
+    }
+    if (newItem.quantity < quantity) {
+      return {
+        error: `Solo hay ${newItem.quantity} unidades disponibles de ${newItem.product.name}`,
+      };
+    }
+
+    const detail = note ? `: ${note}` : "";
+
+    await prisma.$transaction([
+      prisma.inventoryItem.update({
+        where: { id: movement.inventoryItemId },
+        data: { quantity: { increment: quantity } },
+      }),
+      prisma.inventoryMovement.create({
+        data: {
+          inventoryItemId: movement.inventoryItemId,
+          type: "ADJUSTMENT",
+          quantityDelta: quantity,
+          note: `Cambio de talla — regresa ${movement.inventoryItem.product.name}${detail}`,
+        },
+      }),
+      prisma.inventoryItem.update({
+        where: { id: newItem.id },
+        data: { quantity: { decrement: quantity } },
+      }),
+      prisma.inventoryMovement.create({
+        data: {
+          inventoryItemId: newItem.id,
+          type: "ADJUSTMENT",
+          quantityDelta: -quantity,
+          note: `Cambio de talla — entrega ${newItem.product.name} (reemplaza ${movement.inventoryItem.product.name})${detail}`,
+        },
+      }),
+      prisma.inventoryMovement.update({
+        where: { id: movementId },
+        data: { reversedAt: new Date() },
+      }),
+    ]);
+
+    revalidatePath("/admin/movimientos");
+    revalidatePath("/admin");
+    revalidatePath("/admin/inventario");
+    return {
+      success: `Cambio registrado: ${movement.inventoryItem.product.name} → ${newItem.product.name}.`,
+    };
+  }
+
   const fullNote = note
     ? `Reversa de venta — ${reasonLabel}: ${note}`
     : `Reversa de venta — ${reasonLabel}`;
