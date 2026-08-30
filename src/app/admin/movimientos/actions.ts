@@ -147,3 +147,76 @@ export async function registerGiveaway(
     success: `Registrado: ${quantity} x ${item.product.name} — ${reasonLabel}.`,
   };
 }
+
+const REVERSE_REASON_LABEL: Record<string, string> = {
+  CAMBIO: "Cambio de talla",
+  DISGUSTO: "Disgusto del cliente",
+  ERROR_FABRICACION: "Error de fabricación",
+};
+
+const reverseSaleSchema = z.object({
+  reason: z.enum(["CAMBIO", "DISGUSTO", "ERROR_FABRICACION"]),
+  note: z.string().optional(),
+});
+
+/**
+ * Reversa una venta directa registrada por error o devuelta (cambio de
+ * talla, disgusto del cliente, error de fabricación): devuelve la unidad
+ * al inventario y deja un nuevo movimiento visible en el historial. La
+ * venta original no se borra, solo queda marcada como reversada.
+ */
+export async function reverseSaleMovement(
+  movementId: string,
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  await requireAdmin();
+  const parsed = reverseSaleSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
+  }
+  const { reason, note } = parsed.data;
+
+  const movement = await prisma.inventoryMovement.findUnique({
+    where: { id: movementId },
+    include: { inventoryItem: { include: { product: true, location: true } } },
+  });
+  if (!movement || movement.type !== "SALE" || movement.inventoryItem.location.type === "ALLY") {
+    return { error: "Ese movimiento no se puede reversar" };
+  }
+  if (movement.reversedAt) {
+    return { error: "Ese movimiento ya fue reversado" };
+  }
+
+  const quantity = Math.abs(movement.quantityDelta);
+  const reasonLabel = REVERSE_REASON_LABEL[reason];
+  const fullNote = note
+    ? `Reversa de venta — ${reasonLabel}: ${note}`
+    : `Reversa de venta — ${reasonLabel}`;
+
+  await prisma.$transaction([
+    prisma.inventoryItem.update({
+      where: { id: movement.inventoryItemId },
+      data: { quantity: { increment: quantity } },
+    }),
+    prisma.inventoryMovement.create({
+      data: {
+        inventoryItemId: movement.inventoryItemId,
+        type: "ADJUSTMENT",
+        quantityDelta: quantity,
+        note: fullNote,
+      },
+    }),
+    prisma.inventoryMovement.update({
+      where: { id: movementId },
+      data: { reversedAt: new Date() },
+    }),
+  ]);
+
+  revalidatePath("/admin/movimientos");
+  revalidatePath("/admin");
+  revalidatePath("/admin/inventario");
+  return {
+    success: `Reversado: ${quantity} x ${movement.inventoryItem.product.name} — ${reasonLabel}.`,
+  };
+}

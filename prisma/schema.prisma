@@ -171,6 +171,7 @@ model InventoryMovement {
   createdByUserId String?
   createdBy       User?         @relation(fields: [createdByUserId], references: [id])
   createdAt       DateTime      @default(now())
+  reversedAt      DateTime?
 }
 
 model Sale {

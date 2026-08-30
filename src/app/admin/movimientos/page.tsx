@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { formatUSD } from "@/lib/inventory";
 import DirectSaleForm from "./direct-sale-form";
 import GiveawayForm from "./giveaway-form";
+import ReverseMovementAction from "./reverse-movement-action";
 
 const MOVEMENT_TYPE_LABEL: Record<string, string> = {
   RECEIVE: "Entrada",
@@ -141,39 +142,57 @@ export default async function MovimientosPage() {
                 <th className="py-2 pr-4">Ubicación</th>
                 <th className="py-2 pr-4">Cantidad</th>
                 <th className="py-2 pr-4">Nota</th>
+                <th className="py-2 pr-4" />
               </tr>
             </thead>
             <tbody>
-              {movements.map((m) => (
-                <tr key={m.id} className="border-b border-wears-tan/10">
-                  <td className="py-2 pr-4 text-wears-espresso/70">
-                    {m.createdAt.toLocaleString("es-CO")}
-                  </td>
-                  <td className="py-2 pr-4">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${MOVEMENT_TYPE_CLASSES[m.type]}`}
+              {movements.map((m) => {
+                const canReverse =
+                  m.type === "SALE" &&
+                  m.inventoryItem.location.type !== "ALLY" &&
+                  !m.reversedAt;
+                return (
+                  <tr key={m.id} className="border-b border-wears-tan/10">
+                    <td className="py-2 pr-4 text-wears-espresso/70">
+                      {m.createdAt.toLocaleString("es-CO")}
+                    </td>
+                    <td className="py-2 pr-4">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${MOVEMENT_TYPE_CLASSES[m.type]}`}
+                      >
+                        {MOVEMENT_TYPE_LABEL[m.type]}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-4">{m.inventoryItem.product.name}</td>
+                    <td className="py-2 pr-4 text-wears-espresso/70">
+                      {m.inventoryItem.location.ally?.businessName ?? m.inventoryItem.location.name}
+                    </td>
+                    <td
+                      className={`py-2 pr-4 font-medium ${
+                        m.quantityDelta > 0 ? "text-emerald-600" : "text-red-600"
+                      }`}
                     >
-                      {MOVEMENT_TYPE_LABEL[m.type]}
-                    </span>
-                  </td>
-                  <td className="py-2 pr-4">{m.inventoryItem.product.name}</td>
-                  <td className="py-2 pr-4 text-wears-espresso/70">
-                    {m.inventoryItem.location.ally?.businessName ?? m.inventoryItem.location.name}
-                  </td>
-                  <td
-                    className={`py-2 pr-4 font-medium ${
-                      m.quantityDelta > 0 ? "text-emerald-600" : "text-red-600"
-                    }`}
-                  >
-                    {m.quantityDelta > 0 ? "+" : ""}
-                    {m.quantityDelta}
-                  </td>
-                  <td className="py-2 pr-4 text-wears-espresso/60">{m.note ?? "—"}</td>
-                </tr>
-              ))}
+                      {m.quantityDelta > 0 ? "+" : ""}
+                      {m.quantityDelta}
+                    </td>
+                    <td className="py-2 pr-4 text-wears-espresso/60">{m.note ?? "—"}</td>
+                    <td className="py-2 pr-4">
+                      {canReverse && (
+                        <ReverseMovementAction
+                          movementId={m.id}
+                          productName={m.inventoryItem.product.name}
+                        />
+                      )}
+                      {m.type === "SALE" && m.reversedAt && (
+                        <span className="text-xs text-wears-espresso/40">Reversada</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
               {movements.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-4 text-center text-wears-espresso/50">
+                  <td colSpan={7} className="py-4 text-center text-wears-espresso/50">
                     Aún no hay movimientos registrados.
                   </td>
                 </tr>
