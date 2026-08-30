@@ -2,12 +2,12 @@
 
 :root {
   --background: #f2e9da;
-  --foreground: #1f0f45;
+  --foreground: #0d1b3a;
 
-  /* Paleta de marca Wears — tomada de cueroswears.com (violeta profundo + dorado + crudo) */
-  --wears-black: #1f0f45;
-  --wears-espresso: #4a3a73;
-  --wears-leather: #6b4fa0;
+  /* Paleta de marca Wears — azul marino náutico + dorado + crudo */
+  --wears-black: #0d1b3a;
+  --wears-espresso: #1f3a5f;
+  --wears-leather: #3a6591;
   --wears-tan: #c9a24a;
   --wears-sand: #ece3d6;
   --wears-gold: #c6982a;
