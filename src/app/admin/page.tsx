@@ -94,9 +94,9 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
-        <h2 className="mb-1 font-semibold text-wears-black">Rentabilidad de Wears</h2>
-        <p className="mb-3 text-xs text-wears-espresso/50">
+      <section className="rounded-2xl border border-wears-gold/40 bg-gradient-to-br from-wears-black to-wears-espresso p-6 text-wears-cream shadow-md">
+        <h2 className="mb-1 text-lg font-semibold">Rentabilidad de Wears</h2>
+        <p className="mb-4 text-xs text-wears-sand/70">
           Ganancia real de Wears: en aliados se cuenta solo el margen (precio − costo); en
           tienda web y punto físico se cuenta el valor completo de la venta.
         </p>
@@ -110,25 +110,28 @@ export default async function AdminDashboardPage() {
           ).map((period) => {
             const p = m.profitability[period.key];
             return (
-              <div key={period.key} className="rounded-lg border border-wears-tan/20 p-4">
-                <p className="text-xs uppercase tracking-wide text-wears-espresso/60">
+              <div
+                key={period.key}
+                className="rounded-lg border border-wears-cream/10 bg-white/5 p-4"
+              >
+                <p className="text-xs uppercase tracking-wide text-wears-sand/60">
                   {period.label}
                 </p>
-                <p className="mt-1 text-2xl font-semibold text-emerald-600">
+                <p className="mt-1 text-2xl font-semibold text-wears-gold">
                   {formatUSD(p.total)}
                 </p>
-                <dl className="mt-3 flex flex-col gap-1 text-xs text-wears-espresso/70">
+                <dl className="mt-3 flex flex-col gap-1 text-xs text-wears-sand/70">
                   <div className="flex justify-between">
                     <dt>Tienda web</dt>
-                    <dd className="font-medium text-wears-black">{formatUSD(p.web)}</dd>
+                    <dd className="font-medium text-wears-cream">{formatUSD(p.web)}</dd>
                   </div>
                   <div className="flex justify-between">
                     <dt>Puntos físicos</dt>
-                    <dd className="font-medium text-wears-black">{formatUSD(p.store)}</dd>
+                    <dd className="font-medium text-wears-cream">{formatUSD(p.store)}</dd>
                   </div>
                   <div className="flex justify-between">
                     <dt>Aliados comerciales</dt>
-                    <dd className="font-medium text-wears-black">{formatUSD(p.ally)}</dd>
+                    <dd className="font-medium text-wears-cream">{formatUSD(p.ally)}</dd>
                   </div>
                 </dl>
               </div>
@@ -195,9 +198,9 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
-        <h2 className="mb-1 font-semibold text-wears-black">Ventas totales de Wears</h2>
-        <p className="mb-3 text-xs text-wears-espresso/50">
+      <section className="rounded-2xl border-2 border-wears-gold bg-gradient-to-br from-wears-gold to-wears-tan p-6 shadow-md">
+        <h2 className="mb-1 text-lg font-bold text-wears-black">Ventas totales de Wears</h2>
+        <p className="mb-4 text-xs text-wears-black/70">
           Cuánto ha facturado Wears en total: tienda web, puntos físicos y el precio final de
           venta de los aliados.
         </p>
@@ -211,14 +214,14 @@ export default async function AdminDashboardPage() {
           ).map((period) => {
             const r = m.revenueTotals[period.key];
             return (
-              <div key={period.key} className="rounded-lg border border-wears-tan/20 p-4">
-                <p className="text-xs uppercase tracking-wide text-wears-espresso/60">
+              <div key={period.key} className="rounded-lg border border-wears-black/10 bg-white/40 p-4">
+                <p className="text-xs uppercase tracking-wide text-wears-black/60">
                   {period.label}
                 </p>
-                <p className="mt-1 text-2xl font-semibold text-wears-black">
+                <p className="mt-1 text-2xl font-bold text-wears-black">
                   {formatUSD(r.total)}
                 </p>
-                <dl className="mt-3 flex flex-col gap-1 text-xs text-wears-espresso/70">
+                <dl className="mt-3 flex flex-col gap-1 text-xs text-wears-black/70">
                   <div className="flex justify-between">
                     <dt>Tienda web</dt>
                     <dd className="font-medium text-wears-black">{formatUSD(r.web)}</dd>
