@@ -149,11 +149,19 @@ export async function getAdminDashboardMetrics() {
     monthly: emptyProfitBucket(),
     annual: emptyProfitBucket(),
   };
+  // Ventas totales de Wears: precio final de cada venta (aliados incluye
+  // el margen propio del aliado), sin restar nada — es lo que factura Wears.
+  const revenueTotals = {
+    daily: emptyProfitBucket(),
+    monthly: emptyProfitBucket(),
+    annual: emptyProfitBucket(),
+  };
 
   for (const sale of sales) {
     const profit = sale.ally
       ? (sale.unitCost - sale.product.manufacturingCost) * sale.quantity
       : (sale.unitPrice - sale.product.manufacturingCost) * sale.quantity;
+    const revenue = sale.quantity * sale.unitPrice;
     const channel: "web" | "store" | "ally" | null = sale.ally
       ? "ally"
       : sale.location.type === "WEB"
@@ -163,13 +171,25 @@ export async function getAdminDashboardMetrics() {
           : null;
     if (!channel) continue;
 
-    const applyTo = (bucket: { web: number; store: number; ally: number; total: number }) => {
-      bucket[channel] += profit;
-      bucket.total += profit;
+    const applyTo = (
+      bucket: { web: number; store: number; ally: number; total: number },
+      value: number
+    ) => {
+      bucket[channel] += value;
+      bucket.total += value;
     };
-    if (sale.saleDate >= startOfDay) applyTo(profitability.daily);
-    if (sale.saleDate >= startOfMonth) applyTo(profitability.monthly);
-    if (sale.saleDate >= startOfYear) applyTo(profitability.annual);
+    if (sale.saleDate >= startOfDay) {
+      applyTo(profitability.daily, profit);
+      applyTo(revenueTotals.daily, revenue);
+    }
+    if (sale.saleDate >= startOfMonth) {
+      applyTo(profitability.monthly, profit);
+      applyTo(revenueTotals.monthly, revenue);
+    }
+    if (sale.saleDate >= startOfYear) {
+      applyTo(profitability.annual, profit);
+      applyTo(revenueTotals.annual, revenue);
+    }
   }
 
   // Cobro de ventas de aliados: lo que Wears aún debe cobrarle al aliado
@@ -230,6 +250,7 @@ export async function getAdminDashboardMetrics() {
     directSales,
     allySales,
     profitability,
+    revenueTotals,
     pendingSupportCount,
     recentSales: sales.slice(0, 8),
     allyCount: locations.filter((l) => l.type === "ALLY").length,

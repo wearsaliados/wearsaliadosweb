@@ -195,6 +195,49 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
+      <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
+        <h2 className="mb-1 font-semibold text-wears-black">Ventas totales de Wears</h2>
+        <p className="mb-3 text-xs text-wears-espresso/50">
+          Cuánto ha facturado Wears en total: tienda web, puntos físicos y el precio final de
+          venta de los aliados.
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {(
+            [
+              { key: "daily", label: "Hoy" },
+              { key: "monthly", label: "Este mes" },
+              { key: "annual", label: "Este año" },
+            ] as const
+          ).map((period) => {
+            const r = m.revenueTotals[period.key];
+            return (
+              <div key={period.key} className="rounded-lg border border-wears-tan/20 p-4">
+                <p className="text-xs uppercase tracking-wide text-wears-espresso/60">
+                  {period.label}
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-wears-black">
+                  {formatUSD(r.total)}
+                </p>
+                <dl className="mt-3 flex flex-col gap-1 text-xs text-wears-espresso/70">
+                  <div className="flex justify-between">
+                    <dt>Tienda web</dt>
+                    <dd className="font-medium text-wears-black">{formatUSD(r.web)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt>Puntos físicos</dt>
+                    <dd className="font-medium text-wears-black">{formatUSD(r.store)}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt>Aliados comerciales</dt>
+                    <dd className="font-medium text-wears-black">{formatUSD(r.ally)}</dd>
+                  </div>
+                </dl>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
           <h2 className="mb-3 font-semibold text-wears-black">
