@@ -45,20 +45,12 @@ export async function registerDirectSale(
 
   const finalUnitPrice = unitPrice ?? item.product.price;
 
-  await prisma.$transaction([
-    prisma.inventoryItem.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.inventoryItem.update({
       where: { id: item.id },
       data: { quantity: { decrement: quantity } },
-    }),
-    prisma.inventoryMovement.create({
-      data: {
-        inventoryItemId: item.id,
-        type: "SALE",
-        quantityDelta: -quantity,
-        note: note || "Venta directa",
-      },
-    }),
-    prisma.sale.create({
+    });
+    const sale = await tx.sale.create({
       data: {
         allyId: null,
         locationId,
@@ -68,8 +60,17 @@ export async function registerDirectSale(
         unitCost: item.unitCost,
         note: note || null,
       },
-    }),
-  ]);
+    });
+    await tx.inventoryMovement.create({
+      data: {
+        inventoryItemId: item.id,
+        type: "SALE",
+        quantityDelta: -quantity,
+        note: note || "Venta directa",
+        saleId: sale.id,
+      },
+    });
+  });
 
   revalidatePath("/admin/movimientos");
   revalidatePath("/admin");
@@ -150,27 +151,29 @@ export async function registerGiveaway(
 
 const REVERSE_REASON_LABEL: Record<string, string> = {
   CAMBIO: "Cambio de talla",
-  DISGUSTO: "Disgusto del cliente",
-  ERROR_FABRICACION: "Error de fabricación",
+  INCONFORME: "Cliente inconforme",
 };
 
 const reverseSaleSchema = z.object({
-  reason: z.enum(["CAMBIO", "DISGUSTO", "ERROR_FABRICACION"]),
+  reason: z.enum(["CAMBIO", "INCONFORME"]),
   newProductId: z.string().optional(),
   note: z.string().optional(),
 });
 
 /**
- * Reversa una venta directa registrada por error o devuelta (cambio de
- * talla, disgusto del cliente, error de fabricación). En los tres casos
- * devuelve la unidad vendida al inventario y deja un nuevo movimiento
- * visible en el historial; la venta original no se borra, solo queda
- * marcada como reversada.
+ * Reversa una venta directa registrada por error, cambio de talla o
+ * devolución.
  *
- * Si el motivo es "cambio de talla", además descuenta del inventario el
- * modelo/talla nuevo que se entregó a cambio, sin crear un ingreso
- * adicional ni tocar la rentabilidad — es el mismo pago, solo cambió el
- * producto entregado.
+ * Si el motivo es "cambio de talla": devuelve la unidad original al
+ * inventario y descuenta el modelo/talla nuevo entregado, sin crear un
+ * ingreso adicional ni tocar la rentabilidad — es el mismo pago, solo
+ * cambió el producto entregado.
+ *
+ * Si el motivo es "cliente inconforme" (se le devolvió el dinero):
+ * devuelve la unidad al inventario y además elimina el registro de venta
+ * original, para que no siga contando en "Ventas directas recientes" ni
+ * en la rentabilidad. En ambos casos queda un nuevo movimiento visible en
+ * el historial, y el movimiento original queda marcado como reversado.
  */
 export async function reverseSaleMovement(
   movementId: string,
@@ -257,32 +260,38 @@ export async function reverseSaleMovement(
     };
   }
 
+  // INCONFORME: se le devolvió el dinero al cliente, así que la venta
+  // original debe dejar de contar en ingresos y rentabilidad.
   const fullNote = note
     ? `Reversa de venta — ${reasonLabel}: ${note}`
     : `Reversa de venta — ${reasonLabel}`;
 
-  await prisma.$transaction([
-    prisma.inventoryItem.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.inventoryItem.update({
       where: { id: movement.inventoryItemId },
       data: { quantity: { increment: quantity } },
-    }),
-    prisma.inventoryMovement.create({
+    });
+    await tx.inventoryMovement.create({
       data: {
         inventoryItemId: movement.inventoryItemId,
         type: "ADJUSTMENT",
         quantityDelta: quantity,
         note: fullNote,
       },
-    }),
-    prisma.inventoryMovement.update({
+    });
+    await tx.inventoryMovement.update({
       where: { id: movementId },
       data: { reversedAt: new Date() },
-    }),
-  ]);
+    });
+    if (movement.saleId) {
+      await tx.sale.delete({ where: { id: movement.saleId } });
+    }
+  });
 
   revalidatePath("/admin/movimientos");
   revalidatePath("/admin");
   revalidatePath("/admin/inventario");
+  revalidatePath("/admin/ventas");
   return {
     success: `Reversado: ${quantity} x ${movement.inventoryItem.product.name} — ${reasonLabel}.`,
   };

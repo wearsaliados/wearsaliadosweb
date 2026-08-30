@@ -59,9 +59,15 @@ export default function ReverseMovementAction({
                   Motivo
                 </option>
                 <option value="CAMBIO">Cambio de talla</option>
-                <option value="DISGUSTO">Disgusto del cliente</option>
-                <option value="ERROR_FABRICACION">Error de fabricación</option>
+                <option value="INCONFORME">Cliente inconforme</option>
               </select>
+
+              {reason === "INCONFORME" && (
+                <p className="text-xs text-wears-espresso/60">
+                  Se le devolvió el dinero al cliente: la venta se elimina de &quot;Ventas
+                  directas recientes&quot; y de la rentabilidad.
+                </p>
+              )}
 
               {reason === "CAMBIO" && (
                 <select
