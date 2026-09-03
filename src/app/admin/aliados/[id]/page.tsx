@@ -31,8 +31,16 @@ export default async function AllyDetailPage({
 
   const products = await prisma.product.findMany({
     where: { active: true },
+    include: { collection: true },
     orderBy: { name: "asc" },
   });
+
+  const productOptions = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    collectionName: p.collection?.name ?? "Otros productos",
+    cost: p.cost,
+  }));
 
   const balance = ally.ledgerEntries.reduce(
     (s, e) => s + (e.type === "PAYMENT" ? -e.amount : e.amount),
@@ -80,7 +88,7 @@ export default async function AllyDetailPage({
         <h2 className="mb-3 font-semibold text-wears-black">
           Asignar mercancía (compra o consignación)
         </h2>
-        <AssignStockForm allyId={ally.id} products={products} />
+        <AssignStockForm allyId={ally.id} products={productOptions} />
       </section>
 
       <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">

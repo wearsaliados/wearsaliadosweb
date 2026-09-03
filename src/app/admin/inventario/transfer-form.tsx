@@ -2,6 +2,7 @@
 
 import { useActionState, useRef, useEffect, useState } from "react";
 import { transferStock, type FormState } from "./actions";
+import ProductSelect, { type ProductOption } from "@/components/product-select";
 
 const initialState: FormState = {};
 
@@ -12,7 +13,7 @@ export default function TransferForm({
 }: {
   locations: { id: string; name: string }[];
   allies: { id: string; locationId: string; businessName: string }[];
-  products: { id: string; name: string }[];
+  products: ProductOption[];
 }) {
   const [state, formAction, pending] = useActionState(transferStock, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -75,21 +76,13 @@ export default function TransferForm({
           </optgroup>
         </select>
 
-        <select
+        <ProductSelect
           name="productId"
           required
           defaultValue=""
+          products={products}
           className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
-        >
-          <option value="" disabled>
-            Producto
-          </option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+        />
 
         <input
           name="quantity"

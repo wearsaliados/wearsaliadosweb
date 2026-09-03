@@ -34,7 +34,11 @@ export default async function MovimientosPage() {
         where: { type: { not: "ALLY" } },
         orderBy: { name: "asc" },
       }),
-      prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+      prisma.product.findMany({
+        where: { active: true },
+        include: { collection: true },
+        orderBy: { name: "asc" },
+      }),
       prisma.sale.findMany({
         where: { allyId: null },
         include: { product: true, location: true },
@@ -52,6 +56,12 @@ export default async function MovimientosPage() {
         orderBy: { product: { name: "asc" } },
       }),
     ]);
+
+  const productOptions = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    collectionName: p.collection?.name ?? "Otros productos",
+  }));
 
   // Opciones de intercambio (para "cambio de talla" al reversar una venta),
   // agrupadas por ubicación.
@@ -86,7 +96,7 @@ export default async function MovimientosPage() {
         </p>
         <DirectSaleForm
           locations={directLocations.map((l) => ({ id: l.id, name: l.name }))}
-          products={products}
+          products={productOptions}
         />
       </section>
 
@@ -101,7 +111,7 @@ export default async function MovimientosPage() {
         </p>
         <GiveawayForm
           locations={giveawayLocations.map((l) => ({ id: l.id, name: l.name }))}
-          products={products}
+          products={productOptions}
         />
       </section>
 

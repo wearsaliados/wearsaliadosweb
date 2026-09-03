@@ -2,6 +2,7 @@
 
 import { useActionState, useRef, useEffect } from "react";
 import { assignStockToAlly, type FormState } from "../actions";
+import ProductSelect, { type ProductOption } from "@/components/product-select";
 
 const initialState: FormState = {};
 
@@ -10,7 +11,7 @@ export default function AssignStockForm({
   products,
 }: {
   allyId: string;
-  products: { id: string; name: string; cost: number }[];
+  products: ProductOption[];
 }) {
   const [state, formAction, pending] = useActionState(assignStockToAlly, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -26,11 +27,12 @@ export default function AssignStockForm({
       className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5"
     >
       <input type="hidden" name="allyId" value={allyId} />
-      <select
+      <ProductSelect
         name="productId"
         required
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
         defaultValue=""
+        products={products}
         onChange={(e) => {
           const opt = e.target.selectedOptions[0];
           const costInput = e.currentTarget.form?.elements.namedItem(
@@ -38,16 +40,7 @@ export default function AssignStockForm({
           ) as HTMLInputElement | null;
           if (costInput && opt?.dataset.cost) costInput.value = opt.dataset.cost;
         }}
-      >
-        <option value="" disabled>
-          Producto
-        </option>
-        {products.map((p) => (
-          <option key={p.id} value={p.id} data-cost={p.cost}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+      />
       <input
         name="quantity"
         type="number"

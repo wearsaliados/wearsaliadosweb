@@ -2,6 +2,7 @@
 
 import { useActionState, useRef, useEffect } from "react";
 import { adjustInventory, type FormState } from "./actions";
+import ProductSelect, { type ProductOption } from "@/components/product-select";
 
 const initialState: FormState = {};
 
@@ -10,7 +11,7 @@ export default function MovementForm({
   products,
 }: {
   locations: { id: string; name: string }[];
-  products: { id: string; name: string }[];
+  products: ProductOption[];
 }) {
   const [state, formAction, pending] = useActionState(adjustInventory, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -40,21 +41,13 @@ export default function MovementForm({
           </option>
         ))}
       </select>
-      <select
+      <ProductSelect
         name="productId"
         required
         defaultValue=""
+        products={products}
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
-      >
-        <option value="" disabled>
-          Producto
-        </option>
-        {products.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+      />
       <input
         name="quantity"
         type="number"

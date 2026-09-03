@@ -22,7 +22,11 @@ export default async function InventarioPage() {
       include: { inventoryItems: { include: { product: { include: { collection: true } } } } },
       orderBy: [{ type: "asc" }, { name: "asc" }],
     }),
-    prisma.product.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    prisma.product.findMany({
+      where: { active: true },
+      include: { collection: true },
+      orderBy: { name: "asc" },
+    }),
     prisma.ally.findMany({
       where: { active: true },
       include: { location: true },
@@ -33,6 +37,12 @@ export default async function InventarioPage() {
   const allyOptions = allies
     .filter((a) => a.location)
     .map((a) => ({ id: a.id, locationId: a.location!.id, businessName: a.businessName }));
+
+  const productOptions = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    collectionName: p.collection?.name ?? "Otros productos",
+  }));
 
   return (
     <div className="flex flex-col gap-8">
@@ -63,7 +73,7 @@ export default async function InventarioPage() {
         <TransferForm
           locations={nonAllyLocations.map((l) => ({ id: l.id, name: l.name }))}
           allies={allyOptions}
-          products={products}
+          products={productOptions}
         />
       </section>
 
@@ -75,7 +85,7 @@ export default async function InventarioPage() {
         </p>
         <MovementForm
           locations={nonAllyLocations.map((l) => ({ id: l.id, name: l.name }))}
-          products={products}
+          products={productOptions}
         />
       </section>
 
