@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAlly } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatUSD, getStockStatus } from "@/lib/inventory";
+import { formatUSD, getStockStatus, startOfVenezuelaMonth } from "@/lib/inventory";
 import StatCard from "@/components/stat-card";
 import UpcomingBanner from "@/components/upcoming-banner";
 import InventoryBrowser from "@/components/inventory-browser";
@@ -35,8 +35,7 @@ export default async function AllyDashboardPage() {
     0
   );
 
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfMonth = startOfVenezuelaMonth();
   const salesThisMonth = await prisma.sale.aggregate({
     where: { allyId: session.allyId, saleDate: { gte: startOfMonth } },
     _sum: { quantity: true },

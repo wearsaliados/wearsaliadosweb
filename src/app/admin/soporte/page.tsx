@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { formatDateTime } from "@/lib/inventory";
 import { resolveSupportRequest } from "../aliados/actions";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -53,7 +54,7 @@ export default async function SoportePage() {
                   {TYPE_LABEL[r.type]}
                 </p>
                 <p className="text-xs text-wears-espresso/60">
-                  {r.ally.businessName} · {r.createdAt.toLocaleString("es-CO")}
+                  {r.ally.businessName} · {formatDateTime(r.createdAt)}
                 </p>
               </div>
               <span

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { startOfVenezuelaDay, startOfVenezuelaMonth, startOfVenezuelaYear } from "@/lib/inventory";
 
 export async function getAdminDashboardMetrics() {
   const [locations, sales, ledgerEntries, pendingSupportCount] = await Promise.all([
@@ -136,10 +137,9 @@ export async function getAdminDashboardMetrics() {
   // Aliados: costo al que se le entregó al aliado (ya cobrado por
   // consignación) − fabricación — el margen propio del aliado no es de Wears.
   // Agrupado por día, mes y año.
-  const now = new Date();
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const startOfDay = startOfVenezuelaDay();
+  const startOfMonth = startOfVenezuelaMonth();
+  const startOfYear = startOfVenezuelaYear();
 
   function emptyProfitBucket() {
     return { web: 0, store: 0, ally: 0, total: 0 };

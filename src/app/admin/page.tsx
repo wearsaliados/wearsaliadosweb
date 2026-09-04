@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getAdminDashboardMetrics } from "@/lib/metrics";
 import { prisma } from "@/lib/prisma";
-import { formatUSD } from "@/lib/inventory";
+import { formatUSD, formatDate } from "@/lib/inventory";
 import StatCard from "@/components/stat-card";
 import BarList from "@/components/bar-list";
 import ProductSearch from "@/components/product-search";
@@ -337,7 +337,7 @@ export default async function AdminDashboardPage() {
               {m.recentSales.map((s) => (
                 <tr key={s.id} className="border-b border-wears-tan/10">
                   <td className="py-2 pr-4 text-wears-espresso/70">
-                    {s.saleDate.toLocaleDateString("es-CO")}
+                    {formatDate(s.saleDate)}
                   </td>
                   <td className="py-2 pr-4">{s.ally?.businessName ?? s.location.name}</td>
                   <td className="py-2 pr-4">{s.product.name}</td>

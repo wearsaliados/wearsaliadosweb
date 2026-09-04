@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatUSD } from "@/lib/inventory";
+import { formatUSD, formatDate } from "@/lib/inventory";
 import { toggleAllyActive } from "../actions";
 import AssignStockForm from "./assign-stock-form";
 import LedgerForm from "./ledger-form";
@@ -133,7 +133,7 @@ export default async function AllyDetailPage({
               {ally.ledgerEntries.map((e) => (
                 <tr key={e.id} className="border-b border-wears-tan/10">
                   <td className="py-2 pr-4 text-wears-espresso/70">
-                    {e.createdAt.toLocaleDateString("es-CO")}
+                    {formatDate(e.createdAt)}
                   </td>
                   <td className="py-2 pr-4">
                     {e.type === "PAYMENT"
@@ -182,7 +182,7 @@ export default async function AllyDetailPage({
               {ally.sales.map((s) => (
                 <tr key={s.id} className="border-b border-wears-tan/10">
                   <td className="py-2 pr-4 text-wears-espresso/70">
-                    {s.saleDate.toLocaleDateString("es-CO")}
+                    {formatDate(s.saleDate)}
                   </td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>

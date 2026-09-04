@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatUSD } from "@/lib/inventory";
+import { formatUSD, formatDateTime } from "@/lib/inventory";
 import StatCard from "@/components/stat-card";
 import CollectAction from "./collect-action";
 
@@ -84,7 +84,7 @@ export default async function VentasPage() {
               {sales.map((s) => (
                 <tr key={s.id} className="border-b border-wears-tan/10">
                   <td className="py-2 pr-4 text-wears-espresso/70">
-                    {s.saleDate.toLocaleString("es-CO")}
+                    {formatDateTime(s.saleDate)}
                   </td>
                   <td className="py-2 pr-4">{s.ally?.businessName}</td>
                   <td className="py-2 pr-4">{s.product.name}</td>

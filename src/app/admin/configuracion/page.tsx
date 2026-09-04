@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { formatDateTime } from "@/lib/inventory";
 import { sendTestNotification } from "./actions";
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -106,7 +107,7 @@ export default async function ConfiguracionPage() {
               {logs.map((l) => (
                 <tr key={l.id} className="border-b border-wears-tan/10">
                   <td className="py-2 pr-4 text-wears-espresso/70">
-                    {l.createdAt.toLocaleString("es-CO")}
+                    {formatDateTime(l.createdAt)}
                   </td>
                   <td className="py-2 pr-4">{l.channel === "EMAIL" ? "Correo" : "WhatsApp"}</td>
                   <td className="py-2 pr-4 text-wears-espresso/70">{l.event}</td>

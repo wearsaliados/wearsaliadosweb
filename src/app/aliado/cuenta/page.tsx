@@ -1,6 +1,6 @@
 import { requireAlly } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatUSD } from "@/lib/inventory";
+import { formatUSD, formatDate } from "@/lib/inventory";
 
 export default async function AllyCuentaPage() {
   const session = await requireAlly();
@@ -84,7 +84,7 @@ export default async function AllyCuentaPage() {
               {entries.map((e) => (
                 <tr key={e.id} className="border-b border-wears-tan/10">
                   <td className="py-2 pr-4 text-wears-espresso/70">
-                    {e.createdAt.toLocaleDateString("es-CO")}
+                    {formatDate(e.createdAt)}
                   </td>
                   <td className="py-2 pr-4">
                     {e.type === "PAYMENT"

@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatUSD } from "@/lib/inventory";
+import { formatUSD, formatDateTime } from "@/lib/inventory";
 import DirectSaleForm from "./direct-sale-form";
 import GiveawayForm from "./giveaway-form";
 import ReverseMovementAction from "./reverse-movement-action";
@@ -134,7 +134,7 @@ export default async function MovimientosPage() {
               {directSales.map((s) => (
                 <tr key={s.id} className="border-b border-wears-tan/10">
                   <td className="py-2 pr-4 text-wears-espresso/70">
-                    {s.saleDate.toLocaleString("es-CO")}
+                    {formatDateTime(s.saleDate)}
                   </td>
                   <td className="py-2 pr-4">{s.location.name}</td>
                   <td className="py-2 pr-4">{s.product.name}</td>
@@ -182,7 +182,7 @@ export default async function MovimientosPage() {
                 return (
                   <tr key={m.id} className="border-b border-wears-tan/10">
                     <td className="py-2 pr-4 text-wears-espresso/70">
-                      {m.createdAt.toLocaleString("es-CO")}
+                      {formatDateTime(m.createdAt)}
                     </td>
                     <td className="py-2 pr-4">
                       <span

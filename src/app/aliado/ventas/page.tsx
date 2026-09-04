@@ -1,6 +1,6 @@
 import { requireAlly } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatUSD } from "@/lib/inventory";
+import { formatUSD, formatDateTime } from "@/lib/inventory";
 import SaleForm from "./sale-form";
 
 export default async function AllyVentasPage() {
@@ -78,7 +78,7 @@ export default async function AllyVentasPage() {
               {sales.map((s) => (
                 <tr key={s.id} className="border-b border-wears-tan/10">
                   <td className="py-2 pr-4 text-wears-espresso/70">
-                    {s.saleDate.toLocaleString("es-CO")}
+                    {formatDateTime(s.saleDate)}
                   </td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
