@@ -38,6 +38,7 @@ export default async function AllyDetailPage({
   const productOptions = products.map((p) => ({
     id: p.id,
     name: p.name,
+    size: p.size,
     collectionName: p.collection?.name ?? "Otros productos",
     cost: p.cost,
   }));

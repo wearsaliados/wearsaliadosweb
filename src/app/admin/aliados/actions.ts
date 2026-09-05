@@ -141,67 +141,102 @@ export async function deleteAlly(allyId: string) {
   redirect("/admin/aliados");
 }
 
-const stockSchema = z.object({
+const stockBatchSchema = z.object({
   allyId: z.string().min(1),
-  productId: z.string().min(1),
-  quantity: z.coerce.number().int().positive("La cantidad debe ser mayor a 0"),
   acquisitionType: z.enum(["PURCHASE", "CONSIGNMENT"]),
   unitCost: z.coerce.number().min(0),
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1),
+        quantity: z.coerce.number().int().positive(),
+      })
+    )
+    .min(1, "Agrega la cantidad de al menos una talla"),
 });
 
+/**
+ * Asigna mercancía a un aliado, en un solo envío para varias tallas del
+ * mismo modelo a la vez (mismo tipo de adquisición y costo unitario).
+ */
 export async function assignStockToAlly(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
   const session = await requireAdmin();
-  const parsed = stockSchema.safeParse(Object.fromEntries(formData));
+
+  const productIds = formData.getAll("productId").map(String);
+  const rawQuantities = formData.getAll("quantity").map(String);
+  const items = productIds
+    .map((productId, i) => ({ productId, quantity: rawQuantities[i] ?? "" }))
+    .filter((it) => it.quantity.trim() !== "" && Number(it.quantity) > 0);
+
+  const parsed = stockBatchSchema.safeParse({
+    allyId: formData.get("allyId"),
+    acquisitionType: formData.get("acquisitionType"),
+    unitCost: formData.get("unitCost"),
+    items,
+  });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
-  const { allyId, productId, quantity, acquisitionType, unitCost } = parsed.data;
+  const { allyId, acquisitionType, unitCost, items: parsedItems } = parsed.data;
 
   const location = await prisma.location.findUnique({ where: { allyId } });
   if (!location) return { error: "El aliado no tiene ubicación asignada" };
 
-  const [product, ally] = await Promise.all([
-    prisma.product.findUnique({ where: { id: productId } }),
+  const [products, ally] = await Promise.all([
+    prisma.product.findMany({ where: { id: { in: parsedItems.map((i) => i.productId) } } }),
     prisma.ally.findUnique({ where: { id: allyId } }),
   ]);
-  if (!product || !ally) return { error: "Producto o aliado no encontrado" };
+  if (!ally) return { error: "Aliado no encontrado" };
+  const productById = new Map(products.map((p) => [p.id, p]));
 
-  const item = await prisma.inventoryItem.upsert({
-    where: { productId_locationId: { productId, locationId: location.id } },
-    update: { quantity: { increment: quantity }, acquisitionType, unitCost },
-    create: { productId, locationId: location.id, quantity, acquisitionType, unitCost },
+  await prisma.$transaction(async (tx) => {
+    for (const { productId, quantity } of parsedItems) {
+      const product = productById.get(productId);
+      if (!product) continue;
+
+      const item = await tx.inventoryItem.upsert({
+        where: { productId_locationId: { productId, locationId: location.id } },
+        update: { quantity: { increment: quantity }, acquisitionType, unitCost },
+        create: { productId, locationId: location.id, quantity, acquisitionType, unitCost },
+      });
+
+      await tx.inventoryMovement.create({
+        data: {
+          inventoryItemId: item.id,
+          type: "RECEIVE",
+          quantityDelta: quantity,
+          note:
+            acquisitionType === "CONSIGNMENT"
+              ? "Recepción a consignación"
+              : "Recepción por compra",
+          createdByUserId: session.userId,
+        },
+      });
+
+      if (acquisitionType === "CONSIGNMENT") {
+        await tx.ledgerEntry.create({
+          data: {
+            allyId,
+            type: "CONSIGNMENT_CHARGE",
+            amount: quantity * unitCost,
+            description: `Mercancía a consignación: ${product.name} x${quantity}`,
+          },
+        });
+      }
+    }
   });
 
-  await prisma.inventoryMovement.create({
-    data: {
-      inventoryItemId: item.id,
-      type: "RECEIVE",
-      quantityDelta: quantity,
-      note:
-        acquisitionType === "CONSIGNMENT"
-          ? "Recepción a consignación"
-          : "Recepción por compra",
-      createdByUserId: session.userId,
-    },
-  });
-
-  if (acquisitionType === "CONSIGNMENT") {
-    await prisma.ledgerEntry.create({
-      data: {
-        allyId,
-        type: "CONSIGNMENT_CHARGE",
-        amount: quantity * unitCost,
-        description: `Mercancía a consignación: ${product.name} x${quantity}`,
-      },
-    });
-  }
-
+  const totalUnits = parsedItems.reduce((s, i) => s + i.quantity, 0);
   revalidatePath(`/admin/aliados/${allyId}`);
   revalidatePath("/admin/inventario");
-  return { success: `Se asignaron ${quantity} unidades de ${product.name} a ${ally.businessName}.` };
+  return {
+    success: `Se asignaron ${totalUnits} unidades en ${parsedItems.length} talla${
+      parsedItems.length === 1 ? "" : "s"
+    } a ${ally.businessName}.`,
+  };
 }
 
 const ledgerSchema = z.object({
