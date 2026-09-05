@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useEffect, useState } from "react";
 import { transferStock, type FormState } from "./actions";
-import ProductSelect, { type ProductOption } from "@/components/product-select";
+import ModelSizeSelect, { type SizedProduct } from "@/components/model-size-select";
 
 const initialState: FormState = {};
 
@@ -13,16 +13,20 @@ export default function TransferForm({
 }: {
   locations: { id: string; name: string }[];
   allies: { id: string; locationId: string; businessName: string }[];
-  products: ProductOption[];
+  products: SizedProduct[];
 }) {
   const [state, formAction, pending] = useActionState(transferStock, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const [destination, setDestination] = useState("");
+  const [formVersion, setFormVersion] = useState(0);
 
   const [handledSuccess, setHandledSuccess] = useState(state.success);
   if (state.success !== handledSuccess) {
     setHandledSuccess(state.success);
-    if (state.success) setDestination("");
+    if (state.success) {
+      setDestination("");
+      setFormVersion((v) => v + 1);
+    }
   }
 
   useEffect(() => {
@@ -33,7 +37,7 @@ export default function TransferForm({
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col gap-3">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <select
           name="fromLocationId"
           required
@@ -76,10 +80,9 @@ export default function TransferForm({
           </optgroup>
         </select>
 
-        <ProductSelect
+        <ModelSizeSelect
+          key={formVersion}
           name="productId"
-          required
-          defaultValue=""
           products={products}
           className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
         />

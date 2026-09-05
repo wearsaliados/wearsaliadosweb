@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useRef, useEffect } from "react";
+import { useActionState, useRef, useEffect, useState } from "react";
 import { registerGiveaway, type FormState } from "./actions";
-import ProductSelect, { type ProductOption } from "@/components/product-select";
+import ModelSizeSelect, { type SizedProduct } from "@/components/model-size-select";
 
 const initialState: FormState = {};
 
@@ -11,10 +11,17 @@ export default function GiveawayForm({
   products,
 }: {
   locations: { id: string; name: string }[];
-  products: ProductOption[];
+  products: SizedProduct[];
 }) {
   const [state, formAction, pending] = useActionState(registerGiveaway, initialState);
   const formRef = useRef<HTMLFormElement>(null);
+  const [formVersion, setFormVersion] = useState(0);
+
+  const [handledSuccess, setHandledSuccess] = useState(state.success);
+  if (state.success !== handledSuccess) {
+    setHandledSuccess(state.success);
+    if (state.success) setFormVersion((v) => v + 1);
+  }
 
   useEffect(() => {
     if (state.success) formRef.current?.reset();
@@ -24,7 +31,7 @@ export default function GiveawayForm({
     <form
       ref={formRef}
       action={formAction}
-      className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6"
+      className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7"
     >
       <select
         name="locationId"
@@ -41,10 +48,9 @@ export default function GiveawayForm({
           </option>
         ))}
       </select>
-      <ProductSelect
+      <ModelSizeSelect
+        key={formVersion}
         name="productId"
-        required
-        defaultValue=""
         products={products}
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
       />
@@ -81,10 +87,10 @@ export default function GiveawayForm({
         {pending ? "Guardando..." : "Registrar entrega"}
       </button>
       {state.error && (
-        <p className="text-sm text-red-600 sm:col-span-2 lg:col-span-6">{state.error}</p>
+        <p className="text-sm text-red-600 sm:col-span-2 lg:col-span-7">{state.error}</p>
       )}
       {state.success && (
-        <p className="text-sm text-emerald-600 sm:col-span-2 lg:col-span-6">{state.success}</p>
+        <p className="text-sm text-emerald-600 sm:col-span-2 lg:col-span-7">{state.success}</p>
       )}
     </form>
   );

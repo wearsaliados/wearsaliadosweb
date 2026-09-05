@@ -41,12 +41,6 @@ export default async function InventarioPage() {
   const productOptions = products.map((p) => ({
     id: p.id,
     name: p.name,
-    collectionName: p.collection?.name ?? "Otros productos",
-  }));
-
-  const receiveProductOptions = products.map((p) => ({
-    id: p.id,
-    name: p.name,
     size: p.size,
     collectionName: p.collection?.name ?? "Otros productos",
   }));
@@ -92,7 +86,7 @@ export default async function InventarioPage() {
         </p>
         <MovementForm
           locations={nonAllyLocations.map((l) => ({ id: l.id, name: l.name }))}
-          products={receiveProductOptions}
+          products={productOptions}
         />
       </section>
 
