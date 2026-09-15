@@ -37,12 +37,16 @@ export async function getAdminDashboardMetrics() {
     quantity: number;
     minStock: number;
   }[] = [];
-  const outOfStock: {
-    locationName: string;
-    locationType: string;
-    allyId: string | null;
-    productName: string;
-  }[] = [];
+  const outOfStockByLocationMap = new Map<
+    string,
+    {
+      locationId: string;
+      locationName: string;
+      locationType: "STORE" | "ALLY";
+      allyId: string | null;
+      productNames: string[];
+    }
+  >();
 
   for (const loc of locations) {
     for (const item of loc.inventoryItems) {
@@ -87,12 +91,15 @@ export async function getAdminDashboardMetrics() {
           });
         }
         if (item.quantity === 0 && loc.type !== "WEB") {
-          outOfStock.push({
+          const group = outOfStockByLocationMap.get(loc.id) ?? {
+            locationId: loc.id,
             locationName: loc.ally?.businessName ?? loc.name,
-            locationType: loc.type,
+            locationType: loc.type as "STORE" | "ALLY",
             allyId: loc.allyId,
-            productName: item.product.name,
-          });
+            productNames: [],
+          };
+          group.productNames.push(item.product.name);
+          outOfStockByLocationMap.set(loc.id, group);
         }
       }
     }
@@ -219,6 +226,11 @@ export async function getAdminDashboardMetrics() {
     .filter((a) => a.balance > 0)
     .sort((a, b) => b.balance - a.balance);
 
+  const outOfStockByLocation = [...outOfStockByLocationMap.values()].sort(
+    (a, b) => b.productNames.length - a.productNames.length
+  );
+  const outOfStockCount = outOfStockByLocation.reduce((s, g) => s + g.productNames.length, 0);
+
   return {
     inventoryByLocationType,
     inventoryValueByLocationType,
@@ -238,7 +250,8 @@ export async function getAdminDashboardMetrics() {
       }))
       .sort((a, b) => b.quantity - a.quantity),
     restockNeeded,
-    outOfStock,
+    outOfStockByLocation,
+    outOfStockCount,
     topAllies: alliesRanking.slice(0, 5),
     bottomAllies: [...alliesRanking].reverse().slice(0, 5),
     topProducts: productsRanking.slice(0, 5),

@@ -28,6 +28,9 @@ export default async function AdminDashboardPage() {
     quantity: item.quantity,
   }));
 
+  const outOfStockStores = m.outOfStockByLocation.filter((g) => g.locationType !== "ALLY");
+  const outOfStockAllies = m.outOfStockByLocation.filter((g) => g.locationType === "ALLY");
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -154,8 +157,8 @@ export default async function AdminDashboardPage() {
         />
         <StatCard
           label="Productos por reponer"
-          value={m.outOfStock.length.toString()}
-          tone={m.outOfStock.length > 0 ? "critical" : "default"}
+          value={m.outOfStockCount.toString()}
+          tone={m.outOfStockCount > 0 ? "critical" : "default"}
           hint="Agotados en tienda, puntos físicos y aliados"
         />
         <StatCard
@@ -378,27 +381,77 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      {m.outOfStock.length > 0 && (
+      {m.outOfStockCount > 0 && (
         <section className="rounded-xl border-2 border-red-400 bg-red-50 p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold text-red-800">
-              🔴 Productos que necesitan reposición ({m.outOfStock.length})
+              🔴 Productos que necesitan reposición ({m.outOfStockCount})
             </h2>
             <Link href="/admin/reposicion" className="text-sm text-red-700 hover:underline">
               Ver detalle
             </Link>
           </div>
-          <ul className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-            {m.outOfStock.slice(0, 9).map((r, i) => (
-              <li key={i} className="rounded-lg border border-red-300 bg-white px-3 py-2">
-                <p className="font-medium text-wears-black">{r.productName}</p>
-                <p className="text-xs text-red-700">{r.locationName} — 0 disponibles</p>
-              </li>
-            ))}
-          </ul>
-          {m.outOfStock.length > 9 && (
-            <p className="mt-2 text-xs text-red-700">y {m.outOfStock.length - 9} más...</p>
-          )}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-red-700">
+                Tienda en línea y puntos físicos
+              </h3>
+              <div className="flex flex-col gap-2">
+                {outOfStockStores.map((g) => (
+                  <details
+                    key={g.locationId}
+                    className="rounded-lg border border-red-300 bg-white px-3 py-2"
+                  >
+                    <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-wears-black">
+                      {g.locationName}
+                      <span className="text-xs font-normal text-red-700">
+                        {g.productNames.length} producto{g.productNames.length === 1 ? "" : "s"}
+                      </span>
+                    </summary>
+                    <ul className="mt-2 flex flex-col gap-1 text-xs text-red-700">
+                      {g.productNames.map((name, i) => (
+                        <li key={i}>{name}</li>
+                      ))}
+                    </ul>
+                  </details>
+                ))}
+                {outOfStockStores.length === 0 && (
+                  <p className="text-xs text-wears-espresso/50">
+                    Sin agotados en tienda o puntos físicos.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-red-700">
+                Aliados comerciales
+              </h3>
+              <div className="flex flex-col gap-2">
+                {outOfStockAllies.map((g) => (
+                  <details
+                    key={g.locationId}
+                    className="rounded-lg border border-red-300 bg-white px-3 py-2"
+                  >
+                    <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-wears-black">
+                      {g.locationName}
+                      <span className="text-xs font-normal text-red-700">
+                        {g.productNames.length} producto{g.productNames.length === 1 ? "" : "s"}
+                      </span>
+                    </summary>
+                    <ul className="mt-2 flex flex-col gap-1 text-xs text-red-700">
+                      {g.productNames.map((name, i) => (
+                        <li key={i}>{name}</li>
+                      ))}
+                    </ul>
+                  </details>
+                ))}
+                {outOfStockAllies.length === 0 && (
+                  <p className="text-xs text-wears-espresso/50">Sin agotados en aliados.</p>
+                )}
+              </div>
+            </div>
+          </div>
         </section>
       )}
     </div>
