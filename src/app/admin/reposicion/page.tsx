@@ -17,6 +17,7 @@ export default async function ReposicionPage() {
       (i) =>
         getStockStatus(i.quantity, i.product.minStock) !== "DISPONIBLE" &&
         i.location.type !== "FACTORY" &&
+        i.location.type !== "WEB" &&
         i.product.active
     )
     .map((i) => ({
@@ -38,9 +39,8 @@ export default async function ReposicionPage() {
           Reposición de mercancía
         </h1>
         <p className="text-sm text-wears-espresso/60">
-          Productos agotados o en stock bajo en tienda en línea, puntos
-          físicos y aliados. La fábrica no aparece aquí porque es la que
-          repone a los demás — mira su stock en{" "}
+          Productos agotados o en stock bajo en puntos físicos y aliados. La
+          fábrica y la tienda en línea no aparecen aquí — mira su stock en{" "}
           <Link href="/admin/inventario" className="text-wears-gold hover:underline">
             Inventario
           </Link>
