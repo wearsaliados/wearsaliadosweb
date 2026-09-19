@@ -33,6 +33,15 @@ export async function requireAlly(): Promise<SessionPayload & { allyId: string }
   return session as SessionPayload & { allyId: string };
 }
 
+/** Debe usarse al inicio de cada page.tsx / server action del panel de cajero. */
+export async function requireCashier(): Promise<SessionPayload & { cashierId: string }> {
+  const session = await getSession();
+  if (!session || session.role !== "CASHIER" || !session.cashierId) {
+    redirect("/login");
+  }
+  return session as SessionPayload & { cashierId: string };
+}
+
 export async function requireAnySession(): Promise<SessionPayload> {
   const session = await getSession();
   if (!session) {

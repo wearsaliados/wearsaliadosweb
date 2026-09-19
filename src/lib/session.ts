@@ -4,8 +4,9 @@ import { SignJWT, jwtVerify } from "jose";
 
 export type SessionPayload = {
   userId: string;
-  role: "ADMIN" | "ALLY";
+  role: "ADMIN" | "ALLY" | "CASHIER";
   allyId: string | null;
+  cashierId: string | null;
   name: string;
 };
 

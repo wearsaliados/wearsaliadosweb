@@ -42,5 +42,5 @@ export async function changePassword(
     },
   });
 
-  redirect(session.role === "ADMIN" ? "/admin" : "/aliado");
+  redirect(session.role === "ADMIN" ? "/admin" : session.role === "CASHIER" ? "/cajero" : "/aliado");
 }

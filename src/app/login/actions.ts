@@ -30,7 +30,7 @@ export async function login(
 
   const user = await prisma.user.findUnique({
     where: { email: email.toLowerCase().trim() },
-    include: { ally: true },
+    include: { ally: true, cashier: true },
   });
 
   if (!user || !user.active) {
@@ -46,8 +46,9 @@ export async function login(
     userId: user.id,
     role: user.role,
     allyId: user.ally?.id ?? null,
+    cashierId: user.cashier?.id ?? null,
     name: user.name,
   });
 
-  redirect(user.role === "ADMIN" ? "/admin" : "/aliado");
+  redirect(user.role === "ADMIN" ? "/admin" : user.role === "CASHIER" ? "/cajero" : "/aliado");
 }

@@ -6,6 +6,8 @@ type NotifyInput = {
   event: string;
   subject: string;
   message: string;
+  /** Si se define, se usa este texto (más corto) para el WhatsApp en vez de `message` — las plantillas de WhatsApp no aceptan saltos de línea. */
+  whatsappMessage?: string;
 };
 
 let transporter: ReturnType<typeof nodemailer.createTransport> | null | undefined;
@@ -80,6 +82,9 @@ async function sendEmail(input: NotifyInput) {
 
 async function sendWhatsApp(input: NotifyInput) {
   const { WHATSAPP_TOKEN, WHATSAPP_PHONE_ID, WHATSAPP_TO } = process.env;
+  // Las plantillas de WhatsApp no aceptan saltos de línea en sus parámetros.
+  const waMessage = (input.whatsappMessage ?? input.message).replace(/\s*\n+\s*/g, " · ");
+  const waSubject = input.subject.replace(/\s*\n+\s*/g, " · ");
 
   if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID || !WHATSAPP_TO) {
     await prisma.notificationLog.create({
@@ -87,7 +92,7 @@ async function sendWhatsApp(input: NotifyInput) {
         channel: "WHATSAPP",
         event: input.event,
         recipient: WHATSAPP_TO ?? "(no configurado)",
-        message: input.message,
+        message: waMessage,
         status: "SKIPPED",
         error: "WhatsApp Cloud API no configurado (WHATSAPP_TOKEN/PHONE_ID/TO)",
       },
@@ -115,8 +120,8 @@ async function sendWhatsApp(input: NotifyInput) {
               {
                 type: "body",
                 parameters: [
-                  { type: "text", text: input.subject },
-                  { type: "text", text: input.message },
+                  { type: "text", text: waSubject },
+                  { type: "text", text: waMessage },
                 ],
               },
             ],
@@ -134,7 +139,7 @@ async function sendWhatsApp(input: NotifyInput) {
         channel: "WHATSAPP",
         event: input.event,
         recipient: WHATSAPP_TO,
-        message: input.message,
+        message: waMessage,
         status: "SENT",
       },
     });
@@ -144,7 +149,7 @@ async function sendWhatsApp(input: NotifyInput) {
         channel: "WHATSAPP",
         event: input.event,
         recipient: WHATSAPP_TO,
-        message: input.message,
+        message: waMessage,
         status: "FAILED",
         error: err instanceof Error ? err.message : String(err),
       },

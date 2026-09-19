@@ -13,6 +13,14 @@ datasource db {
 enum Role {
   ADMIN
   ALLY
+  CASHIER
+}
+
+enum PaymentMethod {
+  EFECTIVO
+  BOLIVARES
+  USDT
+  BANESCO_PANAMA
 }
 
 enum LocationType {
@@ -66,35 +74,74 @@ enum NotificationStatus {
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  role         Role
-  name         String
-  active       Boolean   @default(true)
-  mustChangePw Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  ally         Ally?
-  movements    InventoryMovement[]
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  passwordHash       String
+  role               Role
+  name               String
+  active             Boolean             @default(true)
+  mustChangePw       Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  ally               Ally?
+  cashier            Cashier?
+  movements          InventoryMovement[]
+  createdSales       Sale[]
+  cashClosings       CashClosing[]
+  commissionPayments CommissionPayment[]
+}
+
+model Cashier {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id])
+  name              String
+  commissionPerSale Float    @default(0)
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model CashClosing {
+  id              String   @id @default(cuid())
+  cashierUserId   String
+  cashier         User     @relation(fields: [cashierUserId], references: [id])
+  closedAt        DateTime @default(now())
+  saleCount       Int
+  totalUSD        Float
+  totalByMethod   Json
+  commissionTotal Float
+
+  sales Sale[]
+}
+
+model CommissionPayment {
+  id            String   @id @default(cuid())
+  cashierUserId String
+  cashier       User     @relation(fields: [cashierUserId], references: [id])
+  month         String
+  amount        Float
+  paidAt        DateTime @default(now())
+
+  @@unique([cashierUserId, month])
 }
 
 model Ally {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id])
-  businessName   String
-  contactName    String
-  phone          String?
-  city           String?
-  notes          String?
-  active         Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  businessName String
+  contactName  String
+  phone        String?
+  city         String?
+  notes        String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  location       Location?
-  sales          Sale[]
-  ledgerEntries  LedgerEntry[]
+  location        Location?
+  sales           Sale[]
+  ledgerEntries   LedgerEntry[]
   supportRequests SupportRequest[]
 }
 
@@ -112,33 +159,33 @@ model Location {
 }
 
 model Collection {
-  id             String    @id @default(cuid())
-  name           String    @unique
-  upcoming       Boolean   @default(false)
-  visibleToAllies Boolean  @default(true)
-  launchNote     String?
-  imageUrl       String?
-  createdAt      DateTime  @default(now())
-  products       Product[]
+  id              String    @id @default(cuid())
+  name            String    @unique
+  upcoming        Boolean   @default(false)
+  visibleToAllies Boolean   @default(true)
+  launchNote      String?
+  imageUrl        String?
+  createdAt       DateTime  @default(now())
+  products        Product[]
 }
 
 model Product {
-  id           String   @id @default(cuid())
-  sku          String   @unique
-  barcode      String?  @unique
-  name         String
-  size         String?
-  description  String?
-  imageUrl     String?
-  price        Float
-  cost         Float    @default(0)
-  manufacturingCost Float @default(0)
-  minStock     Int      @default(2)
-  active       Boolean  @default(true)
-  collectionId String?
-  collection   Collection? @relation(fields: [collectionId], references: [id])
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String      @id @default(cuid())
+  sku               String      @unique
+  barcode           String?     @unique
+  name              String
+  size              String?
+  description       String?
+  imageUrl          String?
+  price             Float
+  cost              Float       @default(0)
+  manufacturingCost Float       @default(0)
+  minStock          Int         @default(2)
+  active            Boolean     @default(true)
+  collectionId      String?
+  collection        Collection? @relation(fields: [collectionId], references: [id])
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
   inventoryItems InventoryItem[]
   sales          Sale[]
@@ -177,22 +224,29 @@ model InventoryMovement {
 }
 
 model Sale {
-  id         String   @id @default(cuid())
-  allyId     String?
-  ally       Ally?    @relation(fields: [allyId], references: [id])
-  locationId String
-  location   Location @relation(fields: [locationId], references: [id])
-  productId  String
-  product    Product  @relation(fields: [productId], references: [id])
-  quantity   Int
-  unitPrice  Float
-  unitCost   Float    @default(0)
-  collected  Boolean  @default(false)
-  paymentProofUrl String?
-  saleDate   DateTime @default(now())
-  note       String?
-  createdAt  DateTime @default(now())
-  movement   InventoryMovement?
+  id                 String             @id @default(cuid())
+  allyId             String?
+  ally               Ally?              @relation(fields: [allyId], references: [id])
+  locationId         String
+  location           Location           @relation(fields: [locationId], references: [id])
+  productId          String
+  product            Product            @relation(fields: [productId], references: [id])
+  quantity           Int
+  unitPrice          Float
+  unitCost           Float              @default(0)
+  collected          Boolean            @default(false)
+  paymentProofUrl    String?
+  paymentMethod      PaymentMethod?
+  commissionEligible Boolean            @default(false)
+  commissionAmount   Float              @default(0)
+  createdByUserId    String?
+  createdBy          User?              @relation(fields: [createdByUserId], references: [id])
+  cashClosingId      String?
+  cashClosing        CashClosing?       @relation(fields: [cashClosingId], references: [id])
+  saleDate           DateTime           @default(now())
+  note               String?
+  createdAt          DateTime           @default(now())
+  movement           InventoryMovement?
 }
 
 model LedgerEntry {

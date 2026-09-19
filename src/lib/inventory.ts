@@ -68,3 +68,30 @@ export function startOfVenezuelaYear(date: Date = new Date()) {
   const { year } = venezuelaDateParts(date);
   return new Date(Date.UTC(year, 0, 1, VENEZUELA_UTC_OFFSET_HOURS, 0, 0));
 }
+
+/** Clave "AAAA-MM" del mes según la hora de Venezuela, para agrupar por mes. */
+export function venezuelaMonthKey(date: Date = new Date()) {
+  const { year, month } = venezuelaDateParts(date);
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+const MONTH_LABELS = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
+
+/** Convierte una clave "AAAA-MM" en una etiqueta legible, ej. "septiembre 2026". */
+export function formatMonthKey(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  return `${MONTH_LABELS[month - 1] ?? month} ${year}`;
+}

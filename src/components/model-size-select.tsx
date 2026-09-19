@@ -7,6 +7,7 @@ export type SizedProduct = {
   name: string;
   size: string | null;
   collectionName: string;
+  price?: number;
 };
 
 function modelNameOf(p: SizedProduct) {
@@ -20,6 +21,7 @@ type Props = {
   products: SizedProduct[];
   name: string;
   className?: string;
+  onProductChange?: (product: SizedProduct | undefined) => void;
 };
 
 /**
@@ -28,7 +30,7 @@ type Props = {
  * envía en el formulario es el segundo select (la talla), con el `name`
  * recibido por props.
  */
-export default function ModelSizeSelect({ products, name, className }: Props) {
+export default function ModelSizeSelect({ products, name, className, onProductChange }: Props) {
   const [modelKey, setModelKey] = useState("");
   const [productId, setProductId] = useState("");
 
@@ -76,7 +78,10 @@ export default function ModelSizeSelect({ products, name, className }: Props) {
         name={name}
         required
         value={productId}
-        onChange={(e) => setProductId(e.target.value)}
+        onChange={(e) => {
+          setProductId(e.target.value);
+          onProductChange?.(variants.find((v) => v.id === e.target.value));
+        }}
         className={className}
       >
         <option value="" disabled>

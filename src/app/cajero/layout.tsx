@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { requireAdmin } from "@/lib/auth";
+import { requireCashier } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import NavLink from "@/components/nav-link";
 import LogoutButton from "@/components/logout-button";
@@ -7,25 +7,21 @@ import MustChangePasswordBanner from "@/components/must-change-password-banner";
 import WearsAnchorLogo from "@/components/wears-logo";
 
 const links = [
-  { href: "/admin", label: "Panel general" },
-  { href: "/admin/inventario", label: "Inventario" },
-  { href: "/admin/productos", label: "Productos" },
-  { href: "/admin/aliados", label: "Aliados comerciales" },
-  { href: "/admin/cajeros", label: "Cajeros" },
-  { href: "/admin/ventas", label: "Ventas" },
-  { href: "/admin/movimientos", label: "Movimientos" },
-  { href: "/admin/reposicion", label: "Reposición" },
-  { href: "/admin/soporte", label: "Soporte" },
-  { href: "/admin/configuracion", label: "Notificaciones" },
+  { href: "/cajero", label: "Registrar venta" },
+  { href: "/cajero/inventario", label: "Inventario" },
+  { href: "/cajero/caja", label: "Cerrar caja" },
 ];
 
-export default async function AdminLayout({
+export default async function CajeroLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await requireAdmin();
-  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  const session = await requireCashier();
+  const [cashier, user] = await Promise.all([
+    prisma.cashier.findUnique({ where: { id: session.cashierId } }),
+    prisma.user.findUnique({ where: { id: session.userId } }),
+  ]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -55,7 +51,9 @@ export default async function AdminLayout({
                   <p className="text-lg font-semibold leading-tight">Wears Inventario</p>
                 </div>
               </div>
-              <p className="mt-2 text-xs text-wears-sand/50">Panel administrador</p>
+              <p className="mt-2 text-xs text-wears-sand/50">
+                {cashier?.name ?? "Cajero"}
+              </p>
             </div>
             <nav className="flex flex-row flex-wrap gap-1 px-4 pb-4 lg:flex-col">
               {links.map((l) => (
