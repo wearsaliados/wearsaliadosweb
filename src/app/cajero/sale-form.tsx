@@ -130,15 +130,18 @@ export default function SaleForm({
   return (
     <>
       <div className="mb-4 flex flex-col gap-3">
-        <label className="flex w-fit items-center gap-2 rounded-full border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700">
-          <input
-            type="checkbox"
-            checked={mode === "ally"}
-            onChange={(e) => setMode(e.target.checked ? "ally" : "sale")}
-            className="h-4 w-4 accent-blue-600"
-          />
-          Aliado comercial
-        </label>
+        <button
+          type="button"
+          onClick={() => setMode(mode === "ally" ? "sale" : "ally")}
+          aria-pressed={mode === "ally"}
+          className={`w-fit rounded-full px-5 py-2 text-sm font-medium transition ${
+            mode === "ally"
+              ? "bg-blue-900 text-white shadow-sm hover:bg-blue-950"
+              : "border border-blue-900/40 text-blue-900 hover:bg-blue-900/5"
+          }`}
+        >
+          {mode === "ally" ? "✓ Entrega aliado comercial" : "Entrega aliado comercial"}
+        </button>
 
         {mode === "sale" && (
           <div className="flex flex-col gap-1 rounded-xl border border-dashed border-wears-gold/50 bg-wears-gold/5 p-3">
@@ -396,7 +399,7 @@ export default function SaleForm({
             <button
               type="submit"
               disabled={allyPending}
-              className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="rounded-full bg-blue-900 px-5 py-2 text-sm font-medium text-white hover:bg-blue-950 disabled:opacity-50"
             >
               {allyPending ? "Transfiriendo..." : "Transferir a aliado"}
             </button>

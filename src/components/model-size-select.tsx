@@ -78,7 +78,7 @@ export default function ModelSizeSelect({ products, name, className, onProductCh
 
       <select
         name={name}
-        required
+        required={Boolean(name)}
         value={productId}
         onChange={(e) => {
           setProductId(e.target.value);
