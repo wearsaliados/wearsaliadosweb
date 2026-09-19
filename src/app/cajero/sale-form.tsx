@@ -136,8 +136,8 @@ export default function SaleForm({
           aria-pressed={mode === "ally"}
           className={`w-fit rounded-full px-5 py-2 text-sm font-medium transition ${
             mode === "ally"
-              ? "bg-blue-900 text-white shadow-sm hover:bg-blue-950"
-              : "border border-blue-900/40 text-blue-900 hover:bg-blue-900/5"
+              ? "bg-wears-black text-white shadow-sm hover:bg-wears-espresso"
+              : "border border-wears-black/40 text-wears-black hover:bg-wears-black/5"
           }`}
         >
           {mode === "ally" ? "✓ Entrega aliado comercial" : "Entrega aliado comercial"}
@@ -399,7 +399,7 @@ export default function SaleForm({
             <button
               type="submit"
               disabled={allyPending}
-              className="rounded-full bg-blue-900 px-5 py-2 text-sm font-medium text-white hover:bg-blue-950 disabled:opacity-50"
+              className="rounded-full bg-wears-black px-5 py-2 text-sm font-medium text-white hover:bg-wears-espresso disabled:opacity-50"
             >
               {allyPending ? "Transfiriendo..." : "Transferir a aliado"}
             </button>

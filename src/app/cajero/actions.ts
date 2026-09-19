@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireCashier } from "@/lib/auth";
 import { formatUSD, formatDate, formatDateTime } from "@/lib/inventory";
 import { notifyAdmin, sendCustomerEmail } from "@/lib/notifications";
+import { buildReceiptHtml } from "./receipt-html";
 
 export type FormState = { error?: string; success?: string; receipt?: Receipt };
 
@@ -336,6 +337,7 @@ export async function sendReceiptEmailAction(
     to: parsed.data.to,
     subject: "Tu comprobante de compra — Wears",
     text,
+    html: buildReceiptHtml(receipt),
   });
   if (!sent.ok) {
     return { error: sent.error ?? "No se pudo enviar el correo" };

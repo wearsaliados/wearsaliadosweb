@@ -39,6 +39,7 @@ export async function sendCustomerEmail(input: {
   to: string;
   subject: string;
   text: string;
+  html?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const client = getTransporter();
   if (!client) {
@@ -50,6 +51,7 @@ export async function sendCustomerEmail(input: {
       to: input.to,
       subject: input.subject,
       text: input.text,
+      html: input.html,
     });
     return { ok: true };
   } catch (err) {
