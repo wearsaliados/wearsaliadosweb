@@ -30,6 +30,33 @@ function getTransporter() {
   return transporter;
 }
 
+/**
+ * Envía un correo a un destinatario cualquiera (por ejemplo, el comprobante
+ * de compra a un cliente) — a diferencia de `notifyAdmin`, no va al correo
+ * del administrador ni se guarda en NotificationLog.
+ */
+export async function sendCustomerEmail(input: {
+  to: string;
+  subject: string;
+  text: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  const client = getTransporter();
+  if (!client) {
+    return { ok: false, error: "El correo saliente no está configurado (SMTP_HOST/PORT/USER/PASS)" };
+  }
+  try {
+    await client.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+    });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 async function sendEmail(input: NotifyInput) {
   const to = process.env.ADMIN_NOTIFICATION_EMAIL;
   const client = getTransporter();

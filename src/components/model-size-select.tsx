@@ -8,6 +8,8 @@ export type SizedProduct = {
   size: string | null;
   collectionName: string;
   price?: number;
+  barcode?: string | null;
+  description?: string | null;
 };
 
 function modelNameOf(p: SizedProduct) {
@@ -19,7 +21,7 @@ function modelNameOf(p: SizedProduct) {
 
 type Props = {
   products: SizedProduct[];
-  name: string;
+  name?: string;
   className?: string;
   onProductChange?: (product: SizedProduct | undefined) => void;
 };

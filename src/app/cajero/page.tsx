@@ -23,7 +23,7 @@ const MOVEMENT_TYPE_CLASSES: Record<string, string> = {
 export default async function CajeroPage() {
   const session = await requireCashier();
 
-  const [locations, products, movements, directInventory] = await Promise.all([
+  const [locations, products, movements, directInventory, allies] = await Promise.all([
     prisma.location.findMany({
       where: { type: { in: ["WEB", "STORE"] } },
       orderBy: { name: "asc" },
@@ -44,6 +44,10 @@ export default async function CajeroPage() {
       include: { product: true },
       orderBy: { product: { name: "asc" } },
     }),
+    prisma.ally.findMany({
+      where: { active: true },
+      orderBy: { businessName: "asc" },
+    }),
   ]);
 
   const defaultLocation =
@@ -57,6 +61,8 @@ export default async function CajeroPage() {
     size: p.size,
     collectionName: p.collection?.name ?? "Otros productos",
     price: p.price,
+    barcode: p.barcode,
+    description: p.description,
   }));
 
   const exchangeOptionsByLocation = new Map<
@@ -86,6 +92,7 @@ export default async function CajeroPage() {
           locations={locations.map((l) => ({ id: l.id, name: l.name }))}
           defaultLocationId={defaultLocation?.id ?? ""}
           products={productOptions}
+          allies={allies.map((a) => ({ id: a.id, businessName: a.businessName }))}
         />
       </section>
 
