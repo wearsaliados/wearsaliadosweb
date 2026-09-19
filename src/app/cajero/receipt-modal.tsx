@@ -39,74 +39,81 @@ export default function ReceiptModal({
     `Método de pago: ${receipt.paymentMethod}`,
   ].join("\n");
 
-  function openWhatsApp() {
-    const digits = phone.replace(/[^0-9]/g, "");
-    if (!digits) return;
-    const url = `https://wa.me/${digits}?text=${encodeURIComponent(whatsappText)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
+  const phoneDigits = phone.replace(/[^0-9]/g, "");
+  const whatsappUrl = phoneDigits
+    ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(whatsappText)}`
+    : undefined;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 print:static print:bg-white print:p-0">
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .wears-receipt-ticket, .wears-receipt-ticket * { visibility: visible; }
+          .wears-receipt-ticket { position: absolute; inset: 0; width: 100%; }
+        }
+      `}</style>
       <div className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl print:max-w-full print:rounded-none print:shadow-none">
         <button
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-wears-espresso/50 hover:bg-wears-sand hover:text-wears-black print:hidden"
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-lg text-wears-cream hover:bg-white/20 hover:text-white print:hidden"
         >
           ✕
         </button>
 
-        <div className="flex flex-col items-center gap-1 rounded-t-2xl bg-wears-black px-6 py-6 text-center text-wears-cream">
-          <WearsAnchorLogo className="h-10 w-10" />
-          <p className="text-xs tracking-[0.35em] uppercase text-wears-tan">Cueroswears.com</p>
-          <p className="text-lg font-semibold">Comprobante de compra</p>
-        </div>
-
-        <div className="px-6 py-5">
-          <div className="mb-4 flex justify-between text-xs text-wears-espresso/60">
-            <span>{formatDateTime(new Date(receipt.date))}</span>
-            <span>{receipt.locationName}</span>
+        <div className="wears-receipt-ticket">
+          <div className="flex flex-col items-center gap-1 rounded-t-2xl bg-wears-black px-6 py-6 text-center text-wears-cream">
+            <WearsAnchorLogo className="h-10 w-10" />
+            <p className="text-xs tracking-[0.35em] uppercase text-wears-tan">Cueroswears.com</p>
+            <p className="text-lg font-semibold">Comprobante de compra</p>
           </div>
 
-          <div className="flex flex-col divide-y divide-dashed divide-wears-tan/30">
-            {receipt.lines.map((l, i) => (
-              <div key={i} className="flex flex-col gap-0.5 py-2.5">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-medium text-wears-black">
-                    {l.productName}
-                    {talla(l.size) && (
-                      <span className="ml-1 text-xs font-normal text-wears-espresso/60">
-                        — {talla(l.size)}
-                      </span>
-                    )}
-                  </p>
-                  <p className="whitespace-nowrap text-sm font-semibold text-wears-black">
-                    {formatUSD(l.unitPrice * l.quantity)}
+          <div className="px-6 py-5">
+            <div className="mb-4 flex justify-between text-xs text-wears-espresso/60">
+              <span>{formatDateTime(new Date(receipt.date))}</span>
+              <span>{receipt.locationName}</span>
+            </div>
+
+            <div className="flex flex-col divide-y divide-dashed divide-wears-tan/30">
+              {receipt.lines.map((l, i) => (
+                <div key={i} className="flex flex-col gap-0.5 py-2.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium text-wears-black">
+                      {l.productName}
+                      {talla(l.size) && (
+                        <span className="ml-1 text-xs font-normal text-wears-espresso/60">
+                          — {talla(l.size)}
+                        </span>
+                      )}
+                    </p>
+                    <p className="whitespace-nowrap text-sm font-semibold text-wears-black">
+                      {formatUSD(l.unitPrice * l.quantity)}
+                    </p>
+                  </div>
+                  {l.description && (
+                    <p className="text-xs text-wears-espresso/50">{l.description}</p>
+                  )}
+                  <p className="text-xs text-wears-espresso/50">
+                    {l.quantity} x {formatUSD(l.unitPrice)}
                   </p>
                 </div>
-                {l.description && (
-                  <p className="text-xs text-wears-espresso/50">{l.description}</p>
-                )}
-                <p className="text-xs text-wears-espresso/50">
-                  {l.quantity} x {formatUSD(l.unitPrice)}
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <div className="mt-3 flex items-center justify-between border-t-2 border-wears-black pt-3">
-            <p className="font-semibold text-wears-black">Total</p>
-            <p className="text-xl font-semibold text-wears-black">{formatUSD(receipt.total)}</p>
+            <div className="mt-3 flex items-center justify-between border-t-2 border-wears-black pt-3">
+              <p className="font-semibold text-wears-black">Total</p>
+              <p className="text-xl font-semibold text-wears-black">{formatUSD(receipt.total)}</p>
+            </div>
+            <div className="mt-1 flex justify-between text-xs text-wears-espresso/60">
+              <span>Método de pago</span>
+              <span>{receipt.paymentMethod}</span>
+            </div>
+            <p className="mt-3 text-center text-xs text-wears-espresso/50">
+              Atendido por {receipt.cashierName} · ¡Gracias por tu compra!
+            </p>
           </div>
-          <div className="mt-1 flex justify-between text-xs text-wears-espresso/60">
-            <span>Método de pago</span>
-            <span>{receipt.paymentMethod}</span>
-          </div>
-          <p className="mt-3 text-center text-xs text-wears-espresso/50">
-            Atendido por {receipt.cashierName} · ¡Gracias por tu compra!
-          </p>
         </div>
 
         <div className="flex flex-col gap-3 border-t border-wears-tan/20 px-6 py-4 print:hidden">
@@ -168,13 +175,19 @@ export default function ReceiptModal({
                 placeholder="WhatsApp del cliente (+58...)"
                 className="flex-1 rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
               />
-              <button
-                type="button"
-                onClick={openWhatsApp}
-                className="rounded-full bg-wears-gold px-4 py-2 text-sm font-medium text-wears-black hover:bg-wears-tan"
+              <a
+                href={whatsappUrl ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  if (!whatsappUrl) e.preventDefault();
+                }}
+                className={`inline-flex items-center justify-center rounded-full bg-wears-gold px-4 py-2 text-sm font-medium text-wears-black hover:bg-wears-tan ${
+                  whatsappUrl ? "" : "pointer-events-none opacity-50"
+                }`}
               >
                 Abrir chat
-              </button>
+              </a>
             </div>
           )}
           {panel === "whatsapp" && (
