@@ -1,5 +1,6 @@
 import { formatUSD, formatDateTime } from "@/lib/inventory";
 import type { Receipt } from "./actions";
+import { WEARS_LOGO_ICON_BASE64 } from "./logo-data";
 
 function escapeHtml(value: string) {
   return value
@@ -58,6 +59,7 @@ export function buildReceiptHtml(receipt: Receipt): string {
 <body style="margin:0;padding:24px;background:#f2e9da;font-family:Arial,Helvetica,sans-serif;">
   <div style="max-width:420px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(10,24,48,0.15);">
     <div style="background:#0a1830;color:#f2e9da;text-align:center;padding:28px 24px;">
+      <img src="data:image/png;base64,${WEARS_LOGO_ICON_BASE64}" alt="Wears" width="56" height="56" style="display:block;margin:0 auto 10px;width:56px;height:56px;" />
       <div style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#c9a24a;">Cueroswears.com</div>
       <div style="font-size:18px;font-weight:600;margin-top:8px;color:#ffffff;">Comprobante de compra</div>
     </div>
