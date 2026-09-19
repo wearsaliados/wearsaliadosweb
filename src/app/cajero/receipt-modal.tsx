@@ -3,14 +3,10 @@
 import { useActionState, useState } from "react";
 import { formatUSD, formatDateTime } from "@/lib/inventory";
 import { sendReceiptEmailAction, type Receipt, type FormState } from "./actions";
-import { buildReceiptHtml } from "./receipt-html";
+import { buildReceiptHtml, tallaLabel } from "./receipt-html";
 import WearsAnchorLogo from "@/components/wears-logo";
 
 const emailInitialState: FormState = {};
-
-function talla(size: string | null) {
-  return size && size !== "Única" ? `Talla ${size}` : null;
-}
 
 export default function ReceiptModal({
   receipt,
@@ -29,12 +25,12 @@ export default function ReceiptModal({
   const whatsappText = [
     "Gracias por tu compra en Wears — Cueroswears.com",
     "",
-    ...receipt.lines.map(
-      (l) =>
-        `*${l.productName}*${talla(l.size) ? ` — ${talla(l.size)}` : ""} x${l.quantity} — ${formatUSD(
-          l.unitPrice * l.quantity
-        )}`
-    ),
+    ...receipt.lines.map((l) => {
+      const talla = tallaLabel(l.size, l.productName);
+      return `*${l.productName}*${talla ? ` — ${talla}` : ""} x${l.quantity} — ${formatUSD(
+        l.unitPrice * l.quantity
+      )}`;
+    }),
     "",
     `*Total: ${formatUSD(receipt.total)}*`,
     `Método de pago: ${receipt.paymentMethod}`,
@@ -80,14 +76,16 @@ export default function ReceiptModal({
           </div>
 
           <div className="flex flex-col divide-y divide-dashed divide-wears-tan/30">
-            {receipt.lines.map((l, i) => (
+            {receipt.lines.map((l, i) => {
+              const talla = tallaLabel(l.size, l.productName);
+              return (
               <div key={i} className="flex flex-col gap-0.5 py-2.5">
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-sm font-medium text-wears-black">
                     {l.productName}
-                    {talla(l.size) && (
+                    {talla && (
                       <span className="ml-1 text-xs font-normal text-wears-espresso/60">
-                        — {talla(l.size)}
+                        — {talla}
                       </span>
                     )}
                   </p>
@@ -102,7 +100,8 @@ export default function ReceiptModal({
                   {l.quantity} x {formatUSD(l.unitPrice)}
                 </p>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-3 flex items-center justify-between border-t-2 border-wears-black pt-3">

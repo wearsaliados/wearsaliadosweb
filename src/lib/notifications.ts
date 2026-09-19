@@ -40,6 +40,7 @@ export async function sendCustomerEmail(input: {
   subject: string;
   text: string;
   html?: string;
+  attachments?: Array<{ filename: string; content: Buffer; cid: string }>;
 }): Promise<{ ok: boolean; error?: string }> {
   const client = getTransporter();
   if (!client) {
@@ -52,6 +53,7 @@ export async function sendCustomerEmail(input: {
       subject: input.subject,
       text: input.text,
       html: input.html,
+      attachments: input.attachments,
     });
     return { ok: true };
   } catch (err) {

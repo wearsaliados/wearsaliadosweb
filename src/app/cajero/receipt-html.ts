@@ -10,19 +10,35 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
-function tallaLabel(size: string | null) {
-  return size && size !== "Única" ? `Talla ${size}` : null;
+/**
+ * El nombre del producto ya incluye "— Talla X" cuando la talla no es
+ * "Única" (ver prisma/seed.ts), así que solo se agrega la etiqueta de
+ * talla aparte cuando no está ya presente en el nombre — evita mostrar
+ * "Náuticos Azul — Talla 40 — Talla 40".
+ */
+export function tallaLabel(size: string | null, productName: string) {
+  if (!size || size === "Única") return null;
+  return productName.includes(`Talla ${size}`) ? null : `Talla ${size}`;
 }
 
 /**
  * Genera el comprobante como un documento HTML completo y autocontenido
  * (estilos en línea) — se usa tanto para el correo al cliente como para la
  * ventana de impresión, así ambos se ven igual que el ticket en pantalla.
+ *
+ * `logoSrc` permite sustituir el logo incrustado en base64 (usado para la
+ * ventana de impresión) por una referencia `cid:` cuando el HTML se envía
+ * como correo — muchos clientes de correo (Gmail incluido) no muestran
+ * imágenes en base64 dentro del `src`, solo adjuntos referenciados por CID.
  */
-export function buildReceiptHtml(receipt: Receipt): string {
+export function buildReceiptHtml(
+  receipt: Receipt,
+  opts?: { logoSrc?: string }
+): string {
+  const logoSrc = opts?.logoSrc ?? `data:image/png;base64,${WEARS_LOGO_ICON_BASE64}`;
   const rows = receipt.lines
     .map((l) => {
-      const talla = tallaLabel(l.size);
+      const talla = tallaLabel(l.size, l.productName);
       return `
         <div style="border-top:1px dashed #c9a24a80;padding:10px 0;">
           <div style="display:flex;justify-content:space-between;gap:12px;">
@@ -59,7 +75,7 @@ export function buildReceiptHtml(receipt: Receipt): string {
 <body style="margin:0;padding:24px;background:#f2e9da;font-family:Arial,Helvetica,sans-serif;">
   <div style="max-width:420px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 16px rgba(10,24,48,0.15);">
     <div style="background:#0a1830;color:#f2e9da;text-align:center;padding:28px 24px;">
-      <img src="data:image/png;base64,${WEARS_LOGO_ICON_BASE64}" alt="Wears" width="56" height="56" style="display:block;margin:0 auto 10px;width:56px;height:56px;" />
+      <img src="${logoSrc}" alt="Wears" width="56" height="56" style="display:block;margin:0 auto 10px;width:56px;height:56px;" />
       <div style="font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#c9a24a;">Cueroswears.com</div>
       <div style="font-size:18px;font-weight:600;margin-top:8px;color:#ffffff;">Comprobante de compra</div>
     </div>

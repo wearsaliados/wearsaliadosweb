@@ -6,7 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { requireCashier } from "@/lib/auth";
 import { formatUSD, formatDate, formatDateTime } from "@/lib/inventory";
 import { notifyAdmin, sendCustomerEmail } from "@/lib/notifications";
-import { buildReceiptHtml } from "./receipt-html";
+import { buildReceiptHtml, tallaLabel } from "./receipt-html";
+import { WEARS_LOGO_ICON_BASE64 } from "./logo-data";
 
 export type FormState = { error?: string; success?: string; receipt?: Receipt };
 
@@ -314,12 +315,12 @@ export async function sendReceiptEmailAction(
     return { error: "No se pudo leer el comprobante" };
   }
 
-  const lines = receipt.lines.map(
-    (l) =>
-      `${l.productName}${l.size && l.size !== "Única" ? ` — Talla ${l.size}` : ""} x${l.quantity} — ${formatUSD(
-        l.unitPrice * l.quantity
-      )}`
-  );
+  const lines = receipt.lines.map((l) => {
+    const talla = tallaLabel(l.size, l.productName);
+    return `${l.productName}${talla ? ` — ${talla}` : ""} x${l.quantity} — ${formatUSD(
+      l.unitPrice * l.quantity
+    )}`;
+  });
   const text = [
     "Gracias por tu compra en Wears — Cueroswears.com",
     "",
@@ -337,7 +338,14 @@ export async function sendReceiptEmailAction(
     to: parsed.data.to,
     subject: "Tu comprobante de compra — Wears",
     text,
-    html: buildReceiptHtml(receipt),
+    html: buildReceiptHtml(receipt, { logoSrc: "cid:wearslogo" }),
+    attachments: [
+      {
+        filename: "wears-logo.png",
+        content: Buffer.from(WEARS_LOGO_ICON_BASE64, "base64"),
+        cid: "wearslogo",
+      },
+    ],
   });
   if (!sent.ok) {
     return { error: sent.error ?? "No se pudo enviar el correo" };
