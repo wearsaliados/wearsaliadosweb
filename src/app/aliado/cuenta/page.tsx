@@ -24,6 +24,12 @@ export default async function AllyCuentaPage() {
     (sum, s) => sum + (s.unitPrice - s.unitCost) * s.quantity,
     0
   );
+  const totalSoldAtCost = profitSales.reduce((sum, s) => sum + s.unitCost * s.quantity, 0);
+  const totalPaid = entries.reduce(
+    (sum, e) => sum + (e.type === "PAYMENT" ? e.amount : 0),
+    0
+  );
+  const amountOwedForSold = Math.max(0, totalSoldAtCost - totalPaid);
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,14 +40,14 @@ export default async function AllyCuentaPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <section
           className={`rounded-xl border p-5 shadow-sm ${
             balance > 0 ? "border-amber-300 bg-amber-50" : "border-emerald-300 bg-emerald-50"
           }`}
         >
           <p className="text-xs uppercase tracking-wide text-wears-espresso/60">
-            Saldo pendiente
+            Saldo a consignación
           </p>
           <p
             className={`mt-1 text-3xl font-semibold ${
@@ -53,6 +59,28 @@ export default async function AllyCuentaPage() {
           {balance <= 0 && (
             <p className="mt-1 text-sm text-emerald-700">Estás al día. ¡Gracias!</p>
           )}
+        </section>
+
+        <section
+          className={`rounded-xl border p-5 shadow-sm ${
+            amountOwedForSold > 0
+              ? "border-amber-300 bg-amber-50"
+              : "border-emerald-300 bg-emerald-50"
+          }`}
+        >
+          <p className="text-xs uppercase tracking-wide text-wears-espresso/60">
+            Saldo por pagar
+          </p>
+          <p
+            className={`mt-1 text-3xl font-semibold ${
+              amountOwedForSold > 0 ? "text-amber-700" : "text-emerald-700"
+            }`}
+          >
+            {formatUSD(amountOwedForSold)}
+          </p>
+          <p className="mt-1 text-sm text-wears-espresso/60">
+            Costo de lo que ya vendiste y aún no has pagado.
+          </p>
         </section>
 
         <section className="rounded-xl border border-emerald-400 bg-emerald-50 p-5 shadow-sm">

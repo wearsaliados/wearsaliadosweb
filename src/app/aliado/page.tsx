@@ -34,6 +34,13 @@ export default async function AllyDashboardPage() {
     (sum, s) => sum + (s.unitPrice - s.unitCost) * s.quantity,
     0
   );
+  const totalUnitsSold = profitSales.reduce((sum, s) => sum + s.quantity, 0);
+  const totalSoldAtCost = profitSales.reduce((sum, s) => sum + s.unitCost * s.quantity, 0);
+  const totalPaid = ledgerEntries.reduce(
+    (sum, e) => sum + (e.type === "PAYMENT" ? e.amount : 0),
+    0
+  );
+  const amountOwedForSold = Math.max(0, totalSoldAtCost - totalPaid);
 
   const startOfMonth = startOfVenezuelaMonth();
   const salesThisMonth = await prisma.sale.aggregate({
@@ -94,12 +101,13 @@ export default async function AllyDashboardPage() {
         </section>
       )}
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         <StatCard label="Unidades disponibles" value={totalUnits.toString()} />
         <StatCard
           label="Vendidas este mes"
           value={(salesThisMonth._sum.quantity ?? 0).toString()}
         />
+        <StatCard label="Total vendido" value={totalUnitsSold.toString()} hint="Unidades vendidas en total" />
         <StatCard
           label="Productos agotados"
           value={outOfStock.length.toString()}
@@ -114,6 +122,12 @@ export default async function AllyDashboardPage() {
         ) : (
           <StatCard label="Productos en stock bajo" value={lowStock.length.toString()} tone={lowStock.length > 0 ? "warning" : "default"} />
         )}
+        <StatCard
+          label="Saldo por pagar"
+          value={formatUSD(amountOwedForSold)}
+          hint="Costo de lo que ya vendiste y aún no has pagado"
+          tone={amountOwedForSold > 0 ? "warning" : "default"}
+        />
         <StatCard
           label="Rentabilidad"
           value={formatUSD(totalProfit)}
