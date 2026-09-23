@@ -214,6 +214,33 @@ export async function getAdminDashboardMetrics() {
     .filter((a) => a.balance > 0)
     .sort((a, b) => b.balance - a.balance);
 
+  // Lo que ya vendieron los aliados (a costo) y aún no han pagado — distinto
+  // de la deuda total de consignación, que incluye también la mercancía que
+  // todavía no han vendido.
+  const soldAtCostByAlly = new Map<string, { name: string; sold: number }>();
+  for (const sale of sales) {
+    if (!sale.ally) continue;
+    const current = soldAtCostByAlly.get(sale.ally.id) ?? {
+      name: sale.ally.businessName,
+      sold: 0,
+    };
+    current.sold += sale.unitCost * sale.quantity;
+    soldAtCostByAlly.set(sale.ally.id, current);
+  }
+  const paidByAlly = new Map<string, number>();
+  for (const entry of ledgerEntries) {
+    if (entry.type !== "PAYMENT") continue;
+    paidByAlly.set(entry.allyId, (paidByAlly.get(entry.allyId) ?? 0) + entry.amount);
+  }
+  const alliesWithSoldUnpaid = [...soldAtCostByAlly.entries()]
+    .map(([allyId, v]) => ({
+      name: v.name,
+      balance: Math.max(0, v.sold - (paidByAlly.get(allyId) ?? 0)),
+    }))
+    .filter((a) => a.balance > 0)
+    .sort((a, b) => b.balance - a.balance);
+  const totalSoldUnpaid = alliesWithSoldUnpaid.reduce((sum, a) => sum + a.balance, 0);
+
   const outOfStockByLocation = [...outOfStockByLocationMap.values()].sort(
     (a, b) => b.productNames.length - a.productNames.length
   );
@@ -246,6 +273,8 @@ export async function getAdminDashboardMetrics() {
     bottomProducts: [...productsRanking].reverse().slice(0, 5),
     totalDebt,
     alliesWithDebt,
+    totalSoldUnpaid,
+    alliesWithSoldUnpaid,
     directSales,
     allySales,
     profitability,

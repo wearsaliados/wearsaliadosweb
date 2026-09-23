@@ -4,16 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { formatUSD, formatDateTime } from "@/lib/inventory";
 import StatCard from "@/components/stat-card";
 import BarList from "@/components/bar-list";
+import CollectibleStatCard from "@/components/collectible-stat-card";
 
 export default async function VentasPage() {
   await requireAdmin();
 
-  const [sales, ledgerEntries] = await Promise.all([
+  const [sales, allAllySales, ledgerEntries] = await Promise.all([
     prisma.sale.findMany({
       where: { allyId: { not: null } },
       include: { product: true, ally: true },
       orderBy: { saleDate: "desc" },
       take: 200,
+    }),
+    prisma.sale.findMany({
+      where: { allyId: { not: null } },
+      select: { allyId: true, unitCost: true, quantity: true, ally: { select: { businessName: true } } },
     }),
     prisma.ledgerEntry.findMany({ include: { ally: true } }),
   ]);
@@ -39,6 +44,33 @@ export default async function VentasPage() {
   const alliesWithDebt = [...debtByAlly.values()]
     .filter((a) => a.balance > 0)
     .sort((a, b) => b.balance - a.balance);
+
+  // Lo que ya vendieron los aliados (a costo) y aún no han pagado — distinto
+  // de la deuda total de consignación, que incluye también la mercancía que
+  // todavía no han vendido.
+  const soldAtCostByAlly = new Map<string, { name: string; sold: number }>();
+  for (const sale of allAllySales) {
+    if (!sale.allyId || !sale.ally) continue;
+    const current = soldAtCostByAlly.get(sale.allyId) ?? {
+      name: sale.ally.businessName,
+      sold: 0,
+    };
+    current.sold += sale.unitCost * sale.quantity;
+    soldAtCostByAlly.set(sale.allyId, current);
+  }
+  const paidByAlly = new Map<string, number>();
+  for (const entry of ledgerEntries) {
+    if (entry.type !== "PAYMENT") continue;
+    paidByAlly.set(entry.allyId, (paidByAlly.get(entry.allyId) ?? 0) + entry.amount);
+  }
+  const alliesWithSoldUnpaid = [...soldAtCostByAlly.entries()]
+    .map(([allyId, v]) => ({
+      name: v.name,
+      balance: Math.max(0, v.sold - (paidByAlly.get(allyId) ?? 0)),
+    }))
+    .filter((a) => a.balance > 0)
+    .sort((a, b) => b.balance - a.balance);
+  const totalSoldUnpaid = alliesWithSoldUnpaid.reduce((s, a) => s + a.balance, 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -78,6 +110,20 @@ export default async function VentasPage() {
         />
       </div>
 
+      <div className="grid grid-cols-1 gap-4">
+        <CollectibleStatCard
+          label="Total por cobrar de aliados"
+          value={formatUSD(totalSoldUnpaid)}
+          tone={totalSoldUnpaid > 0 ? "warning" : "default"}
+          hint="Costo de lo que ya vendieron los aliados y aún no han pagado a Wears — clic para ver de quién es cada saldo"
+          breakdown={alliesWithSoldUnpaid.map((a) => ({
+            name: a.name,
+            value: formatUSD(a.balance),
+          }))}
+          emptyText="Ningún aliado tiene ventas sin pagar."
+        />
+      </div>
+
       {alliesWithDebt.length > 0 && (
         <section className="rounded-xl border border-wears-tan/30 bg-white p-5 shadow-sm">
           <h2 className="mb-3 font-semibold text-wears-black">Deuda por aliado</h2>
@@ -98,7 +144,7 @@ export default async function VentasPage() {
                 <th className="py-2 pr-4">Aliado</th>
                 <th className="py-2 pr-4">Producto</th>
                 <th className="py-2 pr-4">Cantidad</th>
-                <th className="py-2 pr-4">Precio unitario</th>
+                <th className="py-2 pr-4">Costo unitario</th>
                 <th className="py-2 pr-4">Total venta</th>
                 <th className="py-2 pr-4">Ganancia Wears</th>
                 <th className="py-2 pr-4">Nota</th>
@@ -113,7 +159,7 @@ export default async function VentasPage() {
                   <td className="py-2 pr-4">{s.ally?.businessName}</td>
                   <td className="py-2 pr-4">{s.product.name}</td>
                   <td className="py-2 pr-4">{s.quantity}</td>
-                  <td className="py-2 pr-4">{formatUSD(s.unitPrice)}</td>
+                  <td className="py-2 pr-4">{formatUSD(s.unitCost)}</td>
                   <td className="py-2 pr-4 font-medium">
                     {formatUSD(s.quantity * s.unitPrice)}
                   </td>

@@ -7,6 +7,7 @@ import BarList from "@/components/bar-list";
 import ProductSearch from "@/components/product-search";
 import ValueBreakdownStat from "@/components/value-breakdown-stat";
 import CollectionStockList from "@/components/collection-stock-list";
+import CollectibleStatCard from "@/components/collectible-stat-card";
 
 export default async function AdminDashboardPage() {
   const [m, inventoryItems] = await Promise.all([
@@ -165,6 +166,20 @@ export default async function AdminDashboardPage() {
           label="Solicitudes de soporte pendientes"
           value={m.pendingSupportCount.toString()}
           tone={m.pendingSupportCount > 0 ? "warning" : "default"}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        <CollectibleStatCard
+          label="Total por cobrar de aliados"
+          value={formatUSD(m.totalSoldUnpaid)}
+          tone={m.totalSoldUnpaid > 0 ? "warning" : "default"}
+          hint="Costo de lo que ya vendieron los aliados y aún no han pagado a Wears — clic para ver de quién es cada saldo"
+          breakdown={m.alliesWithSoldUnpaid.map((a) => ({
+            name: a.name,
+            value: formatUSD(a.balance),
+          }))}
+          emptyText="Ningún aliado tiene ventas sin pagar."
         />
       </div>
 
