@@ -128,6 +128,7 @@ export default async function AllyDetailPage({
                 <th className="py-2 pr-4">Tipo</th>
                 <th className="py-2 pr-4">Descripción</th>
                 <th className="py-2 pr-4">Monto</th>
+                <th className="py-2 pr-4">Comprobante</th>
               </tr>
             </thead>
             <tbody>
@@ -152,11 +153,25 @@ export default async function AllyDetailPage({
                     {e.type === "PAYMENT" ? "-" : "+"}
                     {formatUSD(e.amount)}
                   </td>
+                  <td className="py-2 pr-4">
+                    {e.proofUrl ? (
+                      <a
+                        href={e.proofUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-wears-gold hover:underline"
+                      >
+                        Ver comprobante
+                      </a>
+                    ) : (
+                      <span className="text-xs text-wears-espresso/40">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
               {ally.ledgerEntries.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-4 text-center text-wears-espresso/50">
+                  <td colSpan={5} className="py-4 text-center text-wears-espresso/50">
                     Sin movimientos de consignación.
                   </td>
                 </tr>

@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { put } from "@vercel/blob";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, hashPassword, generateTempPassword } from "@/lib/auth";
 
 export type FormState = { error?: string; success?: string };
+
+const MAX_PROOF_BYTES = 5 * 1024 * 1024;
 
 const allySchema = z.object({
   email: z.string().trim().min(3, "El correo o usuario es obligatorio"),
@@ -257,8 +260,34 @@ export async function addLedgerEntry(
   }
   const { allyId, type, amount, description } = parsed.data;
 
+  let proofUrl: string | null = null;
+  const file = formData.get("comprobante");
+  if (file instanceof File && file.size > 0) {
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      return { error: "El comprobante debe ser una imagen o un PDF" };
+    }
+    if (file.size > MAX_PROOF_BYTES) {
+      return { error: "El comprobante no puede pesar más de 5 MB" };
+    }
+    try {
+      const blob = await put(`ledger-proofs/${Date.now()}-${file.name}`, file, {
+        access: "public",
+        addRandomSuffix: true,
+      });
+      proofUrl = blob.url;
+    } catch (err) {
+      console.error("Error subiendo comprobante de pago:", err);
+      return {
+        error:
+          err instanceof Error
+            ? `No se pudo subir el comprobante: ${err.message}`
+            : "No se pudo subir el comprobante",
+      };
+    }
+  }
+
   await prisma.ledgerEntry.create({
-    data: { allyId, type, amount, description: description || null },
+    data: { allyId, type, amount, description: description || null, proofUrl },
   });
 
   revalidatePath(`/admin/aliados/${allyId}`);

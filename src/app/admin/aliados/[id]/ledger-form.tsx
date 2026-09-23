@@ -29,7 +29,7 @@ export default function LedgerForm({ allyId }: { allyId: string }) {
         name="amount"
         type="number"
         min="0"
-        step="1000"
+        step="0.01"
         placeholder="Monto"
         required
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
@@ -38,6 +38,12 @@ export default function LedgerForm({ allyId }: { allyId: string }) {
         name="description"
         placeholder="Descripción (opcional)"
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
+      />
+      <input
+        type="file"
+        name="comprobante"
+        accept="image/*,application/pdf"
+        className="text-sm text-wears-espresso/70 file:mr-2 file:rounded-full file:border-0 file:bg-wears-gold/20 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-wears-espresso"
       />
       <button
         type="submit"

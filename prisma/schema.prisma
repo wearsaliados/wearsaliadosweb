@@ -256,6 +256,7 @@ model LedgerEntry {
   type        LedgerType
   amount      Float
   description String?
+  proofUrl    String?
   createdAt   DateTime   @default(now())
 }
 
