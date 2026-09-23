@@ -234,8 +234,6 @@ model Sale {
   quantity           Int
   unitPrice          Float
   unitCost           Float              @default(0)
-  collected          Boolean            @default(false)
-  paymentProofUrl    String?
   paymentMethod      PaymentMethod?
   commissionEligible Boolean            @default(false)
   commissionAmount   Float              @default(0)
