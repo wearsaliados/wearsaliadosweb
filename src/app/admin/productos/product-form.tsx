@@ -63,7 +63,7 @@ export default function ProductForm({
         name="price"
         type="number"
         min="0"
-        step="1000"
+        step="0.01"
         placeholder="Precio de venta"
         required
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
@@ -72,7 +72,7 @@ export default function ProductForm({
         name="cost"
         type="number"
         min="0"
-        step="1000"
+        step="0.01"
         placeholder="Costo"
         required
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
@@ -81,7 +81,7 @@ export default function ProductForm({
         name="manufacturingCost"
         type="number"
         min="0"
-        step="1000"
+        step="0.01"
         placeholder="Costo de fabricación"
         className="rounded-lg border border-wears-tan/30 px-3 py-2 text-sm"
       />

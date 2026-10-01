@@ -128,7 +128,7 @@ export default function AssignStockForm({
         name="unitCost"
         type="number"
         min="0"
-        step="1000"
+        step="0.01"
         placeholder="Costo unitario"
         required
         value={unitCost}
