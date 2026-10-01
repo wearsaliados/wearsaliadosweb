@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f2e9da;
+  --foreground: #0a1830;
+
+  /* Paleta de marca Wears — azul marino náutico + dorado + crudo */
+  --wears-black: #0a1830;
+  --wears-espresso: #1a3255;
+  --wears-leather: #325984;
+  --wears-tan: #c9a24a;
+  --wears-sand: #ece3d6;
+  --wears-gold: #c6982a;
+  --wears-cream: #f2e9da;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-wears-black: var(--wears-black);
+  --color-wears-espresso: var(--wears-espresso);
+  --color-wears-leather: var(--wears-leather);
+  --color-wears-tan: var(--wears-tan);
+  --color-wears-sand: var(--wears-sand);
+  --color-wears-gold: var(--wears-gold);
+  --color-wears-cream: var(--wears-cream);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.wears-sea-bg {
+  background: linear-gradient(
+    to bottom,
+    #06152b 0%,
+    #0b2b4a 30%,
+    #124b66 55%,
+    #1c6f80 75%,
+    #2a8d92 100%
+  );
+}
