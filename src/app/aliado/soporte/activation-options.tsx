@@ -11,6 +11,7 @@ const OPTIONS: {
   title: string;
   description: string;
   image?: string;
+  video?: string;
 }[] = [
   {
     key: "Grabado de láser",
@@ -18,6 +19,7 @@ const OPTIONS: {
     title: "Grabado de láser",
     description: "Personaliza cada pieza con un grabado único a láser.",
     image: "/activations/laser.jpg",
+    video: "/activations/laser.mp4",
   },
   {
     key: "Personalización con piedras (ojo de tigre, ónix, cordones, etc.)",
@@ -81,7 +83,19 @@ export default function ActivationOptions() {
                   : "border-wears-tan/30 hover:border-wears-gold/60"
               }`}
             >
-              {opt.image ? (
+              {opt.video ? (
+                <div className="relative h-32 w-full">
+                  <video
+                    src={opt.video}
+                    poster={opt.image}
+                    className="h-full w-full object-cover"
+                    muted
+                    loop
+                    autoPlay
+                    playsInline
+                  />
+                </div>
+              ) : opt.image ? (
                 <div className="relative h-32 w-full">
                   <Image
                     src={opt.image}
