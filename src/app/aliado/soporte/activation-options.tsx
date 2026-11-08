@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState, useEffect } from "react";
 import Image from "next/image";
-import { Sparkles, Gem, Pin, Gift, Tag, type LucideIcon } from "lucide-react";
+import { Sparkles, Pin, Gift, Tag, type LucideIcon } from "lucide-react";
 import { submitSupportRequest, type FormState } from "./actions";
 
 const OPTIONS: {
@@ -20,13 +20,6 @@ const OPTIONS: {
     description: "Personaliza cada pieza con un grabado único a láser.",
     image: "/activations/laser.jpg",
     video: "/activations/laser.mp4",
-  },
-  {
-    key: "Personalización con piedras (ojo de tigre, ónix, cordones, etc.)",
-    icon: Gem,
-    title: "Personalización con piedras",
-    description: "Ojo de tigre, ónix, cordones y más detalles a la medida.",
-    image: "/activations/piedras.jpg",
   },
   {
     key: "Personalización con pines",
