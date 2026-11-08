@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState, useEffect } from "react";
 import Image from "next/image";
-import { Sparkles, Gem, Gift, Tag, type LucideIcon } from "lucide-react";
+import { Sparkles, Gem, Pin, Gift, Tag, type LucideIcon } from "lucide-react";
 import { submitSupportRequest, type FormState } from "./actions";
 
 const OPTIONS: {
@@ -27,6 +27,14 @@ const OPTIONS: {
     title: "Personalización con piedras",
     description: "Ojo de tigre, ónix, cordones y más detalles a la medida.",
     image: "/activations/piedras.jpg",
+  },
+  {
+    key: "Personalización con pines",
+    icon: Pin,
+    title: "Personalización con pines",
+    description: "Dale un toque único a cada pieza con pines a la medida.",
+    image: "/activations/pines.jpg",
+    video: "/activations/pines.mp4",
   },
   {
     key: "Premio gratis por compra de tu producto Wears con promotora",
@@ -84,7 +92,7 @@ export default function ActivationOptions() {
               }`}
             >
               {opt.video ? (
-                <div className="relative h-32 w-full">
+                <div className="relative aspect-[9/16] w-full">
                   <video
                     src={opt.video}
                     poster={opt.image}
