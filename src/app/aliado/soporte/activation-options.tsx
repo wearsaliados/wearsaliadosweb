@@ -35,6 +35,7 @@ const OPTIONS: {
     title: "Promotora + premio gratis",
     description: "Una promotora en tu punto y un regalo por cada compra.",
     image: "/activations/promotora.jpg",
+    video: "/activations/promotora.mp4",
   },
   {
     key: "Promoción de descuento especial en producto específico",
